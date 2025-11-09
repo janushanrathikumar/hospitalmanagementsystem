@@ -15,7 +15,7 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
   final _firestore = FirebaseFirestore.instance;
 
   Future<void> _addRecordDialog() async {
-    final patientCtrl = TextEditingController();
+    final icCtrl = TextEditingController();
     final taskCtrl = TextEditingController();
 
     String? selectedDoctorUid;
@@ -24,6 +24,13 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
     Map<String, dynamic>? selectedAvailability;
     String? selectedSlot;
 
+    // Patient details
+    String? patientName;
+    String? address;
+    String? age;
+    String? mobile;
+    List<String> icSuggestions = [];
+
     await showDialog(
       context: context,
       builder: (_) => StatefulBuilder(
@@ -31,7 +38,7 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Container(
-            width: 500,
+            width: 520,
             padding: const EdgeInsets.all(24),
             child: SingleChildScrollView(
               child: Column(
@@ -44,14 +51,93 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Patient Name
+                  // IC Input
                   TextField(
-                    controller: patientCtrl,
+                    controller: icCtrl,
                     decoration: const InputDecoration(
-                      labelText: 'Patient Name',
+                      labelText: 'Patient IC Number',
                       border: OutlineInputBorder(),
                     ),
+                    onChanged: (val) async {
+                      if (val.length >= 2) {
+                        final querySnap =
+                            await _firestore.collection('patients').get();
+
+                        final matches = querySnap.docs
+                            .where((doc) => doc.id
+                                .toLowerCase()
+                                .contains(val.toLowerCase()))
+                            .map((doc) => doc.id)
+                            .toList();
+
+                        setState(() => icSuggestions = matches);
+                      } else {
+                        setState(() => icSuggestions = []);
+                      }
+                    },
                   ),
+
+                  if (icSuggestions.isNotEmpty)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(top: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Column(
+                        children: icSuggestions
+                            .map(
+                              (ic) => ListTile(
+                                title: Text(ic),
+                                onTap: () async {
+                                  icCtrl.text = ic;
+                                  setState(() => icSuggestions = []);
+
+                                  final doc = await _firestore
+                                      .collection('patients')
+                                      .doc(ic)
+                                      .get();
+                                  if (doc.exists) {
+                                    final data =
+                                        doc.data() as Map<String, dynamic>;
+                                    setState(() {
+                                      patientName = data['name'];
+                                      address = data['address'];
+                                      age = data['age'];
+                                      mobile = data['mobile'];
+                                    });
+                                  }
+                                },
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+
+                  const SizedBox(height: 12),
+
+                  if (patientName != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Name: $patientName'),
+                          Text('Address: $address'),
+                          Text('Age: $age'),
+                          Text('Mobile: $mobile'),
+                        ],
+                      ),
+                    ),
+
                   const SizedBox(height: 16),
 
                   // Doctor dropdown
@@ -62,7 +148,6 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                         return const Center(child: CircularProgressIndicator());
                       }
 
-                      // Build unique doctor list
                       final doctorMap = <String, String>{};
                       for (var doc in snapshot.data!.docs) {
                         final data = doc.data() as Map<String, dynamic>;
@@ -90,21 +175,18 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                           selectedDoctorName = doctorList
                               .firstWhere((e) => e['uid'] == val)['user_name'];
 
-                          // Fetch all availability docs
+                          // Filter availability
                           final allDocs = snapshot.data!.docs;
                           doctorAvailabilities.clear();
-
                           for (var d in allDocs) {
                             final data = d.data() as Map<String, dynamic>;
                             if (data['uid'] == val) {
                               doctorAvailabilities.add({
                                 ...data,
-                                'id': d.id, // store doc ID
+                                'id': d.id,
                               });
                             }
                           }
-
-                          // Sort by timestamp
                           doctorAvailabilities.sort((a, b) {
                             final t1 = a['timestamp'] as Timestamp?;
                             final t2 = b['timestamp'] as Timestamp?;
@@ -118,76 +200,66 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                       );
                     },
                   ),
+
                   const SizedBox(height: 16),
 
-                  // Show availability list
                   if (doctorAvailabilities.isNotEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Doctor Availability:',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87),
-                          ),
-                          const SizedBox(height: 8),
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: doctorAvailabilities.length,
-                            itemBuilder: (context, index) {
-                              final avail = doctorAvailabilities[index];
-                              final isSelected = selectedAvailability == avail;
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Doctor Availability:',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87),
+                        ),
+                        const SizedBox(height: 8),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: doctorAvailabilities.length,
+                          itemBuilder: (context, index) {
+                            final avail = doctorAvailabilities[index];
+                            final isSelected = selectedAvailability == avail;
 
-                              return InkWell(
-                                onTap: () {
-                                  selectedAvailability = avail;
-                                  selectedSlot = null;
-                                  setState(() {});
-                                },
-                                child: Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10, horizontal: 12),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? Colors.purple.shade50
-                                        : Colors.white,
-                                    border: Border.all(
-                                        color: isSelected
-                                            ? Colors.purple
-                                            : Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('Date: ${avail['date']}'),
-                                      Text(
-                                          'Time: ${avail['start']} - ${avail['end']}'),
-                                    ],
-                                  ),
+                            return InkWell(
+                              onTap: () {
+                                selectedAvailability = avail;
+                                selectedSlot = null;
+                                setState(() {});
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? Colors.purple.shade50
+                                      : Colors.white,
+                                  border: Border.all(
+                                      color: isSelected
+                                          ? Colors.purple
+                                          : Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Date: ${avail['date']}'),
+                                    Text(
+                                        'Time: ${avail['start']} - ${avail['end']}'),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
 
                   const SizedBox(height: 16),
 
-                  // Generate slots if availability selected
                   if (selectedAvailability != null)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,8 +295,6 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                     ),
 
                   const SizedBox(height: 16),
-
-                  // Task input (notes)
                   TextField(
                     controller: taskCtrl,
                     decoration: const InputDecoration(
@@ -242,11 +312,12 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                       minimumSize: const Size.fromHeight(45),
                     ),
                     onPressed: () async {
-                      if (patientCtrl.text.isEmpty ||
+                      if (icCtrl.text.isEmpty ||
                           selectedDoctorName == null ||
                           selectedAvailability == null ||
                           selectedSlot == null ||
-                          taskCtrl.text.isEmpty) {
+                          taskCtrl.text.isEmpty ||
+                          patientName == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text(
@@ -258,9 +329,12 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                       final availabilityId = selectedAvailability!['id'];
                       final bookedSlot = selectedSlot!;
 
-                      // Save appointment
                       await _firestore.collection('appointments').add({
-                        'patient': patientCtrl.text,
+                        'ic_number': icCtrl.text,
+                        'name': patientName,
+                        'address': address,
+                        'age': age,
+                        'mobile': mobile,
                         'doctor': selectedDoctorName,
                         'doctor_uid': selectedDoctorUid,
                         'availability_id': availabilityId,
@@ -270,7 +344,6 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                         'timestamp': Timestamp.now(),
                       });
 
-                      // Mark the slot as booked
                       await _firestore
                           .collection('doctor_availability')
                           .doc(availabilityId)
@@ -290,7 +363,7 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
     );
   }
 
-  /// Create 30-minute slots between start and end times, excluding booked ones
+  /// Generate 30-min slots
   List<String> _generateTimeSlots(
       String start, String end, List<dynamic> booked) {
     try {
@@ -308,9 +381,7 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
         final next = _addMinutes(current, 30);
         if (_compareTime(next, endTime) <= 0) {
           final slot = '${_formatTime(current)} - ${_formatTime(next)}';
-          if (!booked.contains(slot)) {
-            slots.add(slot);
-          }
+          if (!booked.contains(slot)) slots.add(slot);
         }
         current = next;
       }
@@ -332,28 +403,24 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
   }
 
   TimeOfDay _addMinutes(TimeOfDay time, int minutes) {
-    int totalMinutes = time.hour * 60 + time.minute + minutes;
-    int newHour = (totalMinutes ~/ 60) % 24;
-    int newMinute = totalMinutes % 60;
-    return TimeOfDay(hour: newHour, minute: newMinute);
+    int total = time.hour * 60 + time.minute + minutes;
+    return TimeOfDay(hour: (total ~/ 60) % 24, minute: total % 60);
   }
 
-  int _compareTime(TimeOfDay a, TimeOfDay b) {
-    if (a.hour == b.hour) return a.minute.compareTo(b.minute);
-    return a.hour.compareTo(b.hour);
-  }
+  int _compareTime(TimeOfDay a, TimeOfDay b) => a.hour == b.hour
+      ? a.minute.compareTo(b.minute)
+      : a.hour.compareTo(b.hour);
 
   String _formatTime(TimeOfDay time) {
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
+    final h = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final m = time.minute.toString().padLeft(2, '0');
+    final p = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$h:$m $p';
   }
 
   @override
   Widget build(BuildContext context) {
     const purple = Color(0xFF7B2CBF);
-
     return Scaffold(
       appBar: const NurseAppBar(),
       drawer: const NurseDrawer(),
@@ -367,10 +434,9 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5))
             ],
           ),
           child: Column(
@@ -384,10 +450,9 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                     const Text(
                       'APPOINTMENT SCHEDULING',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.black87,
-                      ),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.black87),
                     ),
                     IconButton(
                       icon:
@@ -421,7 +486,11 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                         headingTextStyle: const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.bold),
                         columns: const [
-                          DataColumn(label: Text('Patient')),
+                          DataColumn(label: Text('IC Number')),
+                          DataColumn(label: Text('Name')),
+                          DataColumn(label: Text('Address')),
+                          DataColumn(label: Text('Age')),
+                          DataColumn(label: Text('Mobile')),
                           DataColumn(label: Text('Doctor')),
                           DataColumn(label: Text('Date')),
                           DataColumn(label: Text('Slot')),
@@ -430,7 +499,11 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                         rows: docs.map((d) {
                           final data = d.data() as Map<String, dynamic>;
                           return DataRow(cells: [
-                            DataCell(Text(data['patient'] ?? '')),
+                            DataCell(Text(data['ic_number'] ?? '')),
+                            DataCell(Text(data['name'] ?? '')),
+                            DataCell(Text(data['address'] ?? '')),
+                            DataCell(Text(data['age'] ?? '')),
+                            DataCell(Text(data['mobile'] ?? '')),
                             DataCell(Text(data['doctor'] ?? '')),
                             DataCell(Text(data['availability_date'] ?? '')),
                             DataCell(Text(data['slot_time'] ?? '')),

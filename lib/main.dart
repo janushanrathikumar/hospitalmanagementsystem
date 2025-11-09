@@ -8,9 +8,11 @@ import 'admin/admin.dart';
 import 'doctor/doctor_home.dart';
 import 'nurse/nurse_home.dart';
 import 'pharmacann/pharmacann_home.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hospitalmanagementsystem/nurse/nurse_home.dart';
 import 'home_visit_tracking.dart';
 import 'refer_letter_generator.dart';
 import 'appointment_scheduling.dart';
@@ -31,6 +32,7 @@ class NurseDrawer extends StatelessWidget {
                 ),
               ),
             ),
+            _drawerButton(context, 'HOME', const NurseHome()),
             _drawerButton(
                 context, 'HOME VISIT TRACKING', const HomeVisitTrackingPage()),
             _drawerButton(context, 'REFER LETTER GENERATOR',

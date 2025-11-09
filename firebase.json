@@ -1,1 +1,37 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"hospitalmanagementsystem-23681","appId":"1:610163437629:android:a573cfaed66407d50d3a54","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"hospitalmanagementsystem-23681","configurations":{"android":"1:610163437629:android:a573cfaed66407d50d3a54","ios":"1:610163437629:ios:e6925a54955a714e0d3a54","web":"1:610163437629:web:2419980db8969ff40d3a54"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "hospitalmanagementsystem-23681",
+          "appId": "1:610163437629:android:a573cfaed66407d50d3a54",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "hospitalmanagementsystem-23681",
+          "configurations": {
+            "android": "1:610163437629:android:a573cfaed66407d50d3a54",
+            "ios": "1:610163437629:ios:e6925a54955a714e0d3a54",
+            "web": "1:610163437629:web:2419980db8969ff40d3a54"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
