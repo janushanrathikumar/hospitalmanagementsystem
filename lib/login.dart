@@ -168,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     const SizedBox(height: 8),
                     const Text(
-                      'HEALTH INFORMATION SYSTEM',
+                      'CLINICAL INFORMATION SYSTEM',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,

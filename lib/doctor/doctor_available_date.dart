@@ -134,14 +134,14 @@ class _DoctorAvailableDateState extends State<DoctorAvailableDate> {
                 },
               ),
               DropdownButtonFormField<TimeOfDay>(
-                value: editStart,
+                initialValue: editStart,
                 decoration: const InputDecoration(labelText: 'Start Time'),
                 items: _timeOptions(),
                 onChanged: (v) => setState(() => editStart = v),
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<TimeOfDay>(
-                value: editEnd,
+                initialValue: editEnd,
                 decoration: const InputDecoration(labelText: 'End Time'),
                 items: _timeOptions(),
                 onChanged: (v) => setState(() => editEnd = v),
@@ -252,7 +252,7 @@ class _DoctorAvailableDateState extends State<DoctorAvailableDate> {
                                 ),
                                 const SizedBox(height: 16),
                                 DropdownButtonFormField<TimeOfDay>(
-                                  value: _startTime,
+                                  initialValue: _startTime,
                                   decoration: const InputDecoration(
                                       labelText: 'Start Time',
                                       border: OutlineInputBorder()),
@@ -262,7 +262,7 @@ class _DoctorAvailableDateState extends State<DoctorAvailableDate> {
                                 ),
                                 const SizedBox(height: 16),
                                 DropdownButtonFormField<TimeOfDay>(
-                                  value: _endTime,
+                                  initialValue: _endTime,
                                   decoration: const InputDecoration(
                                       labelText: 'End Time',
                                       border: OutlineInputBorder()),
@@ -326,7 +326,7 @@ class _DoctorAvailableDateState extends State<DoctorAvailableDate> {
                                 }
 
                                 return DataTable(
-                                  headingRowColor: MaterialStatePropertyAll(
+                                  headingRowColor: WidgetStatePropertyAll(
                                       purple.withOpacity(0.1)),
                                   columns: const [
                                     DataColumn(label: Text('Date')),

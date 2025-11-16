@@ -41,7 +41,7 @@ class NurseDrawer extends StatelessWidget {
                 const AppointmentSchedulingPage()),
             _drawerButton(context, 'MATERNAL AND CHILD CARE',
                 const MaternalChildCarePage()),
-            _drawerButton(context, 'PATIENT HEALTH TRACKING',
+            _drawerButton(context, 'PATIENT DETAILS',
                 const PatientHealthTrackingPage()),
             _drawerButton(context, 'REMINDER', const ReminderPage()),
           ],

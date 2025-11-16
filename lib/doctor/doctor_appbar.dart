@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'doctor_home.dart';
-import 'doctor_available_date.dart';
 
 class DoctorAppBar extends StatelessWidget implements PreferredSizeWidget {
   const DoctorAppBar({super.key});

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hospitalmanagementsystem/admin/add_user.dart';
+import 'package:hospitalmanagementsystem/admin/patient.dart';
 import 'admin.dart';
 
 class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -97,6 +98,17 @@ class AdminDrawer extends StatelessWidget {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => const AddUserPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.home, color: Colors.white),
+              title: const Text('Patient Details',
+                  style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PatientPage()),
                 );
               },
             ),

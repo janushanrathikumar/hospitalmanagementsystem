@@ -76,8 +76,7 @@ class _InfoCard extends StatelessWidget {
   const _InfoCard(
       {required this.icon,
       required this.label,
-      required this.value,
-      super.key});
+      required this.value});
 
   @override
   Widget build(BuildContext context) {

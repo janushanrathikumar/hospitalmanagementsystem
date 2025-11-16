@@ -162,7 +162,7 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                           labelText: 'Select Doctor',
                           border: OutlineInputBorder(),
                         ),
-                        value: selectedDoctorUid,
+                        initialValue: selectedDoctorUid,
                         items: doctorList
                             .map<DropdownMenuItem<String>>(
                                 (d) => DropdownMenuItem<String>(
@@ -482,7 +482,7 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
                         headingRowColor:
-                            MaterialStatePropertyAll(Colors.grey.shade800),
+                            WidgetStatePropertyAll(Colors.grey.shade800),
                         headingTextStyle: const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.bold),
                         columns: const [

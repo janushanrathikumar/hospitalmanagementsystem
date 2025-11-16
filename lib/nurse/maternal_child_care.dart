@@ -302,7 +302,7 @@ class _MaternalChildCarePageState extends State<MaternalChildCarePage> {
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
                         headingRowColor:
-                            MaterialStatePropertyAll(Colors.grey.shade800),
+                            WidgetStatePropertyAll(Colors.grey.shade800),
                         headingTextStyle: const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.bold),
                         columns: const [

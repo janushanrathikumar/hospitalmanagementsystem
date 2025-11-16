@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // <-- 1. ADD THIS
-import 'package:google_generative_ai/google_generative_ai.dart'; // <-- 2. ADD THIS
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:file_picker/file_picker.dart';
 import 'nurse_appbar.dart';
 import 'nurse_drawer.dart';
-// 3. You can REMOVE 'import 'chatbot_page.dart';'
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'dart:io';
 
-// 4. ADD THE ChatMessage CLASS HERE
 class ChatMessage {
   final String text;
   final bool isUser;
+  final String? filePath;
 
-  ChatMessage({required this.text, required this.isUser});
+  ChatMessage({required this.text, required this.isUser, this.filePath});
 }
 
 class NurseHome extends StatefulWidget {
@@ -24,27 +27,24 @@ class NurseHome extends StatefulWidget {
 class _NurseHomeState extends State<NurseHome> {
   final _firestore = FirebaseFirestore.instance;
 
-  // --- 5. ADD ALL CHAT LOGIC HERE ---
+  // Chat logic
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
 
   late final GenerativeModel _model;
   bool _loading = false;
-  bool _isChatVisible = false; // Controls the popup
-  // --- END OF CHAT LOGIC ---
+  bool _isChatVisible = false;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the Gemini model
     final apiKey = dotenv.env['GEMINI_API_KEY'];
     if (apiKey == null) {
       print('API key not found. Make sure to set it in .env file');
       return;
     }
     _model = GenerativeModel(
-      // Note: Using 'gemini-1.5-flash' as it worked before.
       model: 'gemini-2.5-flash',
       apiKey: apiKey,
     );
@@ -52,18 +52,27 @@ class _NurseHomeState extends State<NurseHome> {
 
   @override
   void dispose() {
-    // Dispose chat controllers
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  // --- 6. ADD ALL CHAT FUNCTIONS HERE ---
-
-  // Toggles the chat window visibility
+  // Toggle chat visibility
   void _toggleChat() {
     setState(() {
       _isChatVisible = !_isChatVisible;
+    });
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
@@ -98,21 +107,118 @@ class _NurseHomeState extends State<NurseHome> {
       print('Error sending message: $e');
     }
   }
+Future<void> _pickFile() async {
+  FilePickerResult? result = await FilePicker.platform.pickFiles(
+    type: FileType.custom,
+    allowedExtensions: ['pdf'],
+  );
 
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
+  if (result == null) return; 
+
+  final file = result.files.first;
+  
+  // 1. Check for byte data (Web-compatible approach)
+  // This is used instead of dart:io.File(path).readAsBytesSync()
+  final bytes = file.bytes;
+  if (bytes == null) {
+    setState(() {
+      _messages.add(ChatMessage(
+        text: "❌ Unable to read file content.",
+        isUser: false,
+      ));
+      _loading = false;
+    });
+    return;
+  }
+  
+  // Update UI immediately
+  setState(() {
+    _messages.add(ChatMessage(
+      text: "📎 ${file.name}",
+      isUser: true,
+      filePath: file.path, 
+    ));
+    _loading = true;
+  });
+  _scrollToBottom();
+  
+  String extractedText = '';
+
+  // Quick check for PDF magic number (using bytes)
+  if (!(bytes.length >= 4 &&
+      bytes[0] == 0x25 &&
+      bytes[1] == 0x50 &&
+      bytes[2] == 0x44 &&
+      bytes[3] == 0x46)) {
+    setState(() {
+      _messages.add(ChatMessage(
+        text: "❌ Unsupported file format. Please select a valid PDF.",
+        isUser: false,
+      ));
+      _loading = false;
+    });
+    return;
+  }
+
+  // 2. Syncfusion PDF Text Extraction (Using bytes)
+  try {
+    final pdfDocument = PdfDocument(inputBytes: bytes);
+    
+    // Correctly initialize extractor with the document
+    final PdfTextExtractor extractor = PdfTextExtractor(pdfDocument);
+    extractedText = extractor.extractText();
+    
+    pdfDocument.dispose();
+  } catch (e) {
+    print("Syncfusion PDF extraction failed: $e");
+    extractedText = ''; // Ensure text is empty if extraction fails
+  }
+
+  // ML Kit OCR fallback removed for Web compatibility.
+  
+  // 3. Check Final Extraction Result
+  if (extractedText.trim().isEmpty) {
+    setState(() {
+      _messages.add(ChatMessage(
+        text: "❗ Unable to extract text. PDF might be encrypted, scanned, or empty.",
+        isUser: false,
+      ));
+      _loading = false;
+    });
+    return;
+  }
+
+  // 4. Send Extracted Text to Gemini Model
+  final summaryPrompt = """
+Here is the content of a PDF. Please summarize it in clear bullet points:
+
+$extractedText
+""";
+
+  try {
+    final response = await _model.generateContent([Content.text(summaryPrompt)]);
+
+    // 5. Add Bot Response
+    setState(() {
+      _messages.add(ChatMessage(
+        text: response.text ?? "⚠ Unable to generate summary.",
+        isUser: false,
+      ));
+      _loading = false;
+    });
+  } catch (e) {
+    print('Critical Error generating content: $e');
+    setState(() {
+      _messages.add(ChatMessage(
+        text: "❌ AI response failed: $e",
+        isUser: false,
+      ));
+      _loading = false;
     });
   }
-  // --- END OF CHAT FUNCTIONS ---
 
-  // This is your existing function (no changes)
+  _scrollToBottom();
+}
   Future<void> _addPatientDialog() async {
     final nameCtrl = TextEditingController();
     final addressCtrl = TextEditingController();
@@ -228,21 +334,17 @@ class _NurseHomeState extends State<NurseHome> {
       appBar: const NurseAppBar(),
       drawer: const NurseDrawer(),
       backgroundColor: const Color(0xFFF5F5F5),
-
-      // --- 7. MODIFY THE FAB ---
       floatingActionButton: FloatingActionButton(
-        onPressed: _toggleChat, // Change this
+        onPressed: _toggleChat,
         backgroundColor: purple,
         child: Icon(
-          _isChatVisible ? Icons.close : Icons.smart_toy, // Change icon
+          _isChatVisible ? Icons.close : Icons.smart_toy,
           color: Colors.white,
         ),
       ),
-
-      // --- 8. MODIFY THE BODY (use a Stack) ---
       body: Stack(
         children: [
-          // This is your original body content
+          // Main content
           Padding(
             padding: const EdgeInsets.all(24),
             child: Container(
@@ -275,8 +377,8 @@ class _NurseHomeState extends State<NurseHome> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.add_circle,
-                              color: purple, size: 30),
+                          icon:
+                              const Icon(Icons.add_circle, color: purple, size: 30),
                           onPressed: _addPatientDialog,
                         ),
                       ],
@@ -296,18 +398,16 @@ class _NurseHomeState extends State<NurseHome> {
 
                         final docs = snapshot.data!.docs;
                         if (docs.isEmpty) {
-                          return const Center(
-                              child: Text('No patient records'));
+                          return const Center(child: Text('No patient records'));
                         }
 
                         return SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: DataTable(
                             headingRowColor:
-                                MaterialStatePropertyAll(Colors.grey.shade800),
+                                MaterialStateProperty.all(Colors.grey.shade800),
                             headingTextStyle: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
+                                color: Colors.white, fontWeight: FontWeight.bold),
                             columns: const [
                               DataColumn(label: Text('IC Number')),
                               DataColumn(label: Text('Name')),
@@ -334,20 +434,18 @@ class _NurseHomeState extends State<NurseHome> {
               ),
             ),
           ),
-
-          // --- 9. ADD THE CHAT POPUP WIDGET ---
+          // Chat popup
           if (_isChatVisible)
             Positioned(
               bottom: 20,
               right: 20,
-              child: _buildChatPopup(), // This is our new chat window
+              child: _buildChatPopup(),
             ),
         ],
       ),
     );
   }
 
-  // --- 10. ADD THE CHAT POPUP UI BUILDER ---
   Widget _buildChatPopup() {
     return Container(
       width: 350,
@@ -365,7 +463,7 @@ class _NurseHomeState extends State<NurseHome> {
       ),
       child: Column(
         children: [
-          // Chat Header
+          // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             height: 50,
@@ -389,8 +487,7 @@ class _NurseHomeState extends State<NurseHome> {
               ],
             ),
           ),
-
-          // Message List
+          // Messages
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -406,8 +503,7 @@ class _NurseHomeState extends State<NurseHome> {
               },
             ),
           ),
-
-          // Input Area
+          // Input
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: const BoxDecoration(
@@ -416,6 +512,10 @@ class _NurseHomeState extends State<NurseHome> {
             ),
             child: Row(
               children: [
+                IconButton(
+                  icon: const Icon(Icons.attach_file),
+                  onPressed: _loading ? null : _pickFile,
+                ),
                 Expanded(
                   child: TextField(
                     controller: _messageController,
@@ -450,7 +550,6 @@ class _NurseHomeState extends State<NurseHome> {
     );
   }
 
-  // --- 11. ADD THE CHAT BUBBLE BUILDER ---
   Widget _buildChatBubble(ChatMessage message) {
     const purple = Color(0xFF7B2CBF);
 

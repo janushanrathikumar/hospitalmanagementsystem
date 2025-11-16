@@ -40,7 +40,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   google_generative_ai: ^0.4.7
   pdf: ^3.11.3
-  intl: ^0.20.2
+  intl: ^0.19.0
   printing: ^5.14.2
 
 dev_dependencies:
@@ -52,7 +52,13 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
+  file_picker: ^10.3.6
+  pdfx: ^2.2.4
+  syncfusion_flutter_pdf: ^20.4.49
+  google_mlkit_text_recognition: ^0.7.0
+
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

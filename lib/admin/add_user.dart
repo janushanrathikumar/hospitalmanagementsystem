@@ -96,7 +96,7 @@ class _AddUserPageState extends State<AddUserPage> {
                   controller: mobCtrl,
                   decoration: const InputDecoration(labelText: 'Mobile')),
               DropdownButtonFormField<String>(
-                value: role,
+                initialValue: role,
                 decoration: const InputDecoration(labelText: 'Role'),
                 items: const [
                   DropdownMenuItem(value: 'admin', child: Text('Admin')),
@@ -218,7 +218,7 @@ class _AddUserPageState extends State<AddUserPage> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _selectedRole,
+                      initialValue: _selectedRole,
                       decoration: const InputDecoration(
                         labelText: 'Role',
                         border: OutlineInputBorder(),
