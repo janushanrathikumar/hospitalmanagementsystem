@@ -6,6 +6,7 @@ import 'appointment_scheduling.dart';
 import 'maternal_child_care.dart';
 import 'patient_health_tracking.dart';
 import 'reminder.dart';
+import 'report.dart';
 
 class NurseDrawer extends StatelessWidget {
   const NurseDrawer({super.key});
@@ -41,9 +42,10 @@ class NurseDrawer extends StatelessWidget {
                 const AppointmentSchedulingPage()),
             _drawerButton(context, 'MATERNAL AND CHILD CARE',
                 const MaternalChildCarePage()),
-            _drawerButton(context, 'PATIENT DETAILS',
-                const PatientHealthTrackingPage()),
+            _drawerButton(
+                context, 'PATIENT DETAILS', const PatientHealthTrackingPage()),
             _drawerButton(context, 'REMINDER', const ReminderPage()),
+            _drawerButton(context, 'REPORT', const ClinicReportPage()),
           ],
         ),
       ),

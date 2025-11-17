@@ -346,6 +346,7 @@ class _ReferLetterGeneratorPageState extends State<ReferLetterGeneratorPage> {
                   onPressed: _onGeneratePressed,
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
+                       foregroundColor: Colors.white,  
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12)),
                   child: const Text('Generate'),
@@ -355,6 +356,7 @@ class _ReferLetterGeneratorPageState extends State<ReferLetterGeneratorPage> {
                   onPressed: _onSavePressed,
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
+                       foregroundColor: Colors.white,  
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12)),
                   child: const Text('Save'),
@@ -364,6 +366,7 @@ class _ReferLetterGeneratorPageState extends State<ReferLetterGeneratorPage> {
                   onPressed: _clearForm,
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
+                       foregroundColor: Colors.white,  
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12)),
                   child: const Text('Delete'),

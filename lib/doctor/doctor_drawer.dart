@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'doctor_home.dart';
 import 'doctor_available_date.dart';
 import 'patient.dart';
+import 'report.dart';
+
 
 class DoctorDrawer extends StatelessWidget {
   const DoctorDrawer({super.key});
@@ -63,6 +65,18 @@ class DoctorDrawer extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (_) => const PatientPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.calendar_today, color: Colors.white),
+              title: const Text('Report',
+                  style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const ClinicReportPage()),
                 );
               },
             ),

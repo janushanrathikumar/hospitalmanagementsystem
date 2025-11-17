@@ -239,6 +239,7 @@ class _AddUserPageState extends State<AddUserPage> {
                         : ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: purple,
+                               foregroundColor: Colors.white,  
                               padding: const EdgeInsets.symmetric(
                                   vertical: 14, horizontal: 30),
                               shape: RoundedRectangleBorder(

@@ -310,6 +310,8 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF7B2CBF),
                       minimumSize: const Size.fromHeight(45),
+                      foregroundColor: Colors.white,    
+                     
                     ),
                     onPressed: () async {
                       if (icCtrl.text.isEmpty ||
