@@ -2,11 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hospitalmanagementsystem/nurse/dash.dart';
 import 'firebase_options.dart';
 import 'login.dart';
 import 'admin/admin.dart';
 import 'doctor/doctor_home.dart';
-import 'nurse/nurse_home.dart';
+import 'nurse/nurse_home1.dart';
 import 'pharmacann/pharmacann_home.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// Checks if user already logged in and directs accordingly
+
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -51,7 +52,7 @@ class AuthGate extends StatelessWidget {
       case 'admin':
         return const AdminPage();
       case 'nurse':
-        return const NurseHome();
+        return const NurseDash();
       case 'doctor':
         return const DoctorHome();
       case 'pharmacann':

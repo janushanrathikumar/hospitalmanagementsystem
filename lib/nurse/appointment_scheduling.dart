@@ -13,7 +13,24 @@ class AppointmentSchedulingPage extends StatefulWidget {
 
 class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
   final _firestore = FirebaseFirestore.instance;
+  final Color purpleTheme = const Color(0xFF4A3469);
 
+  // --- UI REDESIGN HELPERS ---
+  Widget _buildSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, top: 12),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+            color: purpleTheme,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1),
+      ),
+    );
+  }
+
+  // --- BOOKING DIALOG ---
   Future<void> _addRecordDialog() async {
     final icCtrl = TextEditingController();
     final taskCtrl = TextEditingController();
@@ -24,312 +41,256 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
     Map<String, dynamic>? selectedAvailability;
     String? selectedSlot;
 
-    // Patient details
     String? patientName;
     String? address;
     String? age;
     String? mobile;
-    List<String> icSuggestions = [];
+    List<Map<String, dynamic>> icSuggestions = [];
 
     await showDialog(
       context: context,
       builder: (_) => StatefulBuilder(
-        builder: (context, setState) => Dialog(
+        builder: (context, setDialogState) => Dialog(
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
-            width: 520,
-            padding: const EdgeInsets.all(24),
+            width: 600,
+            padding: const EdgeInsets.all(30),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Book Appointment',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  Row(
+                    children: [
+                      Icon(Icons.event_available, color: purpleTheme, size: 28),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'New Appointment',
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
+                  const Divider(height: 32),
 
-                  // IC Input
+                  // 1. Patient Search Section
+                  _buildSectionLabel("Patient Search"),
                   TextField(
                     controller: icCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Patient IC Number',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: 'Enter NRIC / IC Number',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     onChanged: (val) async {
-                      if (val.length >= 2) {
-                        final querySnap =
-                            await _firestore.collection('patients').get();
+                      if (val.length >= 1) {
+                        final querySnap = await _firestore
+                            .collection('patients')
+                            .where('ic_number', isGreaterThanOrEqualTo: val)
+                            .where('ic_number',
+                                isLessThanOrEqualTo: '$val\uf8ff')
+                            .limit(5)
+                            .get();
 
-                        final matches = querySnap.docs
-                            .where((doc) => doc.id
-                                .toLowerCase()
-                                .contains(val.toLowerCase()))
-                            .map((doc) => doc.id)
-                            .toList();
-
-                        setState(() => icSuggestions = matches);
+                        setDialogState(() {
+                          
+                          icSuggestions = querySnap.docs.map((doc) {
+                            final data = doc.data() as Map<String, dynamic>;
+                            return {...data, 'id': doc.id};
+                          }).toList();
+                        });
                       } else {
-                        setState(() => icSuggestions = []);
+                        setDialogState(() => icSuggestions = []);
                       }
                     },
                   ),
 
                   if (icSuggestions.isNotEmpty)
                     Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(top: 6),
+                      margin: const EdgeInsets.only(top: 4),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black12, blurRadius: 4)
+                        ],
                       ),
                       child: Column(
                         children: icSuggestions
-                            .map(
-                              (ic) => ListTile(
-                                title: Text(ic),
-                                onTap: () async {
-                                  icCtrl.text = ic;
-                                  setState(() => icSuggestions = []);
-
-                                  final doc = await _firestore
-                                      .collection('patients')
-                                      .doc(ic)
-                                      .get();
-                                  if (doc.exists) {
-                                    final data =
-                                        doc.data() as Map<String, dynamic>;
-                                    setState(() {
-                                      patientName = data['name'];
-                                      address = data['address'];
-                                      age = data['age'];
-                                      mobile = data['mobile'];
+                            .map((p) => ListTile(
+                                  leading: const Icon(Icons.person),
+                                  title: Text(p['name'] ?? ''),
+                                  subtitle: Text(p['ic_number'] ?? ''),
+                                  onTap: () {
+                                    setDialogState(() {
+                                      icCtrl.text = p['ic_number'];
+                                      patientName = p['name'];
+                                      address = p['address'];
+                                      age = p['age'];
+                                      mobile = p['mobile'];
+                                      icSuggestions = [];
                                     });
-                                  }
-                                },
-                              ),
-                            )
+                                  },
+                                ))
                             .toList(),
                       ),
                     ),
 
-                  const SizedBox(height: 12),
-
                   if (patientName != null)
                     Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(top: 16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
+                        color: purpleTheme.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: purpleTheme.withOpacity(0.2)),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Text('Name: $patientName'),
-                          Text('Address: $address'),
-                          Text('Age: $age'),
-                          Text('Mobile: $mobile'),
+                          const Icon(Icons.check_circle, color: Colors.green),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "Selected: $patientName ($age yrs)\n$address",
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ),
                         ],
                       ),
                     ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                  // Doctor dropdown
+                  // 2. Doctor Selection
+                  _buildSectionLabel("Doctor Selection"),
                   FutureBuilder<QuerySnapshot>(
                     future: _firestore.collection('doctor_availability').get(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
+                      if (!snapshot.hasData)
+                        return const LinearProgressIndicator();
 
-                      final doctorMap = <String, String>{};
+                      final doctors = <String, String>{};
                       for (var doc in snapshot.data!.docs) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        doctorMap[data['uid']] = data['user_name'];
+                        final d = doc.data() as Map<String, dynamic>;
+                        doctors[d['uid']] = d['user_name'];
                       }
-                      final doctorList = doctorMap.entries
-                          .map((e) => {'uid': e.key, 'user_name': e.value})
-                          .toList();
 
                       return DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(
-                          labelText: 'Select Doctor',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          hintText: 'Choose a Doctor',
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
-                        initialValue: selectedDoctorUid,
-                        items: doctorList
-                            .map<DropdownMenuItem<String>>(
-                                (d) => DropdownMenuItem<String>(
-                                      value: d['uid'] as String,
-                                      child: Text(d['user_name'] as String),
-                                    ))
+                        items: doctors.entries
+                            .map((e) => DropdownMenuItem(
+                                  value: e.key,
+                                  child: Text(e.value),
+                                ))
                             .toList(),
-                        onChanged: (val) async {
-                          selectedDoctorUid = val;
-                          selectedDoctorName = doctorList
-                              .firstWhere((e) => e['uid'] == val)['user_name'];
-
-                          // Filter availability
-                          final allDocs = snapshot.data!.docs;
-                          doctorAvailabilities.clear();
-                          for (var d in allDocs) {
-                            final data = d.data() as Map<String, dynamic>;
-                            if (data['uid'] == val) {
-                              doctorAvailabilities.add({
-                                ...data,
-                                'id': d.id,
-                              });
-                            }
-                          }
-                          doctorAvailabilities.sort((a, b) {
-                            final t1 = a['timestamp'] as Timestamp?;
-                            final t2 = b['timestamp'] as Timestamp?;
-                            return (t2?.compareTo(t1 ?? Timestamp.now()) ?? 0);
+                        onChanged: (val) {
+                          setDialogState(() {
+                            selectedDoctorUid = val;
+                            selectedDoctorName = doctors[val];
+                            selectedAvailability = null;
+                            selectedSlot = null;
+                           
+                            doctorAvailabilities = snapshot.data!.docs
+                                .where((d) => (d.data() as Map)['uid'] == val)
+                                .map((d) => Map<String, dynamic>.from(
+                                    {...d.data() as Map, 'id': d.id}))
+                                .toList();
                           });
-
-                          selectedAvailability = null;
-                          selectedSlot = null;
-                          setState(() {});
                         },
                       );
                     },
                   ),
 
-                  const SizedBox(height: 16),
-
-                  if (doctorAvailabilities.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Doctor Availability:',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87),
-                        ),
-                        const SizedBox(height: 8),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: doctorAvailabilities.length,
-                          itemBuilder: (context, index) {
-                            final avail = doctorAvailabilities[index];
-                            final isSelected = selectedAvailability == avail;
-
-                            return InkWell(
-                              onTap: () {
-                                selectedAvailability = avail;
-                                selectedSlot = null;
-                                setState(() {});
+                  if (doctorAvailabilities.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    _buildSectionLabel("Available Dates"),
+                    SizedBox(
+                      height: 50,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: doctorAvailabilities.map((avail) {
+                          final isSelected = selectedAvailability == avail;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(avail['date'] ?? ''),
+                              selected: isSelected,
+                              selectedColor: purpleTheme.withOpacity(0.2),
+                              onSelected: (s) {
+                                setDialogState(() {
+                                  selectedAvailability = avail;
+                                  selectedSlot = null;
+                                });
                               },
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10, horizontal: 12),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? Colors.purple.shade50
-                                      : Colors.white,
-                                  border: Border.all(
-                                      color: isSelected
-                                          ? Colors.purple
-                                          : Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('Date: ${avail['date']}'),
-                                    Text(
-                                        'Time: ${avail['start']} - ${avail['end']}'),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
+                  ],
 
-                  const SizedBox(height: 16),
-
-                  if (selectedAvailability != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Available 30-min Slots:',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _generateTimeSlots(
-                            selectedAvailability!['start'],
-                            selectedAvailability!['end'],
-                            (selectedAvailability!['booked_slots'] as List?) ??
-                                [],
-                          )
-                              .map((slot) => ChoiceChip(
-                                    label: Text(slot),
-                                    selected: selectedSlot == slot,
-                                    selectedColor: Colors.purple.shade300,
-                                    onSelected: (_) {
-                                      selectedSlot = slot;
-                                      setState(() {});
-                                    },
-                                  ))
-                              .toList(),
-                        ),
-                      ],
+                  if (selectedAvailability != null) ...[
+                    const SizedBox(height: 20),
+                    _buildSectionLabel("Select Time Slot"),
+                    Wrap(
+                      spacing: 8,
+                      children: _generateTimeSlots(
+                        selectedAvailability!['start'],
+                        selectedAvailability!['end'],
+                        (selectedAvailability!['booked_slots'] as List?) ?? [],
+                      )
+                          .map((slot) => ChoiceChip(
+                                label: Text(slot),
+                                selected: selectedSlot == slot,
+                                onSelected: (s) =>
+                                    setDialogState(() => selectedSlot = slot),
+                              ))
+                          .toList(),
                     ),
+                  ],
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
+                  _buildSectionLabel("Purpose of Visit"),
                   TextField(
                     controller: taskCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Task / Notes',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: 'e.g., General Checkup, Diabetes',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
-                  const SizedBox(height: 20),
 
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.save),
-                    label: const Text('Book Appointment'),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF7B2CBF),
-                      minimumSize: const Size.fromHeight(45),
-                      foregroundColor: Colors.white,    
-                     
+                      backgroundColor: purpleTheme,
+                      minimumSize: const Size.fromHeight(55),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: () async {
-                      if (icCtrl.text.isEmpty ||
-                          selectedDoctorName == null ||
-                          selectedAvailability == null ||
+                      if (patientName == null ||
                           selectedSlot == null ||
-                          taskCtrl.text.isEmpty ||
-                          patientName == null) {
+                          taskCtrl.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text(
-                                  'Please fill all fields and select a slot')),
+                              content: Text('Please complete all selections')),
                         );
                         return;
                       }
 
-                      final availabilityId = selectedAvailability!['id'];
-                      final bookedSlot = selectedSlot!;
+                      final availId = selectedAvailability!['id'];
 
                       await _firestore.collection('appointments').add({
                         'ic_number': icCtrl.text,
@@ -339,22 +300,25 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                         'mobile': mobile,
                         'doctor': selectedDoctorName,
                         'doctor_uid': selectedDoctorUid,
-                        'availability_id': availabilityId,
+                        'availability_id': availId,
                         'availability_date': selectedAvailability!['date'],
-                        'slot_time': bookedSlot,
+                        'slot_time': selectedSlot,
                         'task': taskCtrl.text,
-                        'timestamp': Timestamp.now(),
+                        'timestamp': FieldValue.serverTimestamp(),
                       });
 
                       await _firestore
                           .collection('doctor_availability')
-                          .doc(availabilityId)
-                          .set({
-                        'booked_slots': FieldValue.arrayUnion([bookedSlot]),
-                      }, SetOptions(merge: true));
+                          .doc(availId)
+                          .update({
+                        'booked_slots': FieldValue.arrayUnion([selectedSlot]),
+                      });
 
-                      if (context.mounted) Navigator.pop(context);
+                      Navigator.pop(context);
                     },
+                    child: const Text('CONFIRM BOOKING',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -365,20 +329,17 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
     );
   }
 
-  /// Generate 30-min slots
+ 
   List<String> _generateTimeSlots(
       String start, String end, List<dynamic> booked) {
     try {
       final startParts = _parseTime(start);
       final endParts = _parseTime(end);
-
-      final startTime =
+      TimeOfDay current =
           TimeOfDay(hour: startParts['h']!, minute: startParts['m']!);
       final endTime = TimeOfDay(hour: endParts['h']!, minute: endParts['m']!);
 
       final slots = <String>[];
-      TimeOfDay current = startTime;
-
       while (_compareTime(current, endTime) < 0) {
         final next = _addMinutes(current, 30);
         if (_compareTime(next, endTime) <= 0) {
@@ -387,7 +348,6 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
         }
         current = next;
       }
-
       return slots;
     } catch (_) {
       return [];
@@ -398,114 +358,93 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
     final parts = time.split(':');
     int hour = int.parse(parts[0]);
     int minute = int.parse(parts[1].split(' ')[0]);
-    final isPM = time.toLowerCase().contains('pm');
-    if (isPM && hour != 12) hour += 12;
-    if (!isPM && hour == 12) hour = 0;
+    if (time.toLowerCase().contains('pm') && hour != 12) hour += 12;
+    if (time.toLowerCase().contains('am') && hour == 12) hour = 0;
     return {'h': hour, 'm': minute};
-  }
-
-  TimeOfDay _addMinutes(TimeOfDay time, int minutes) {
-    int total = time.hour * 60 + time.minute + minutes;
-    return TimeOfDay(hour: (total ~/ 60) % 24, minute: total % 60);
   }
 
   int _compareTime(TimeOfDay a, TimeOfDay b) => a.hour == b.hour
       ? a.minute.compareTo(b.minute)
       : a.hour.compareTo(b.hour);
 
-  String _formatTime(TimeOfDay time) {
-    final h = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final m = time.minute.toString().padLeft(2, '0');
-    final p = time.period == DayPeriod.am ? 'AM' : 'PM';
+  TimeOfDay _addMinutes(TimeOfDay time, int min) {
+    int total = time.hour * 60 + time.minute + min;
+    return TimeOfDay(hour: (total ~/ 60) % 24, minute: total % 60);
+  }
+
+  String _formatTime(TimeOfDay t) {
+    final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+    final m = t.minute.toString().padLeft(2, '0');
+    final p = t.period == DayPeriod.am ? 'AM' : 'PM';
     return '$h:$m $p';
   }
 
   @override
   Widget build(BuildContext context) {
-    const purple = Color(0xFF7B2CBF);
     return Scaffold(
       appBar: const NurseAppBar(),
       drawer: const NurseDrawer(),
-      backgroundColor: const Color(0xFFF5F5F5),
+       backgroundColor: const Color(0xFFF8F9FA),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addRecordDialog,
+        backgroundColor: purpleTheme,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text("Book New", style: TextStyle(color: Colors.white)),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5))
-            ],
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'APPOINTMENT SCHEDULING',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Colors.black87),
-                    ),
-                    IconButton(
-                      icon:
-                          const Icon(Icons.add_circle, color: purple, size: 30),
-                      onPressed: _addRecordDialog,
-                    ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'APPOINTMENT SCHEDULING',
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black12, blurRadius: 10)
                   ],
                 ),
-              ),
-              Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _firestore
                       .collection('appointments')
                       .orderBy('timestamp', descending: true)
                       .snapshots(),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
+                    if (!snapshot.hasData)
                       return const Center(child: CircularProgressIndicator());
-                    }
-
                     final docs = snapshot.data!.docs;
-                    if (docs.isEmpty) {
-                      return const Center(child: Text('No appointments yet'));
-                    }
+                    if (docs.isEmpty)
+                      return const Center(child: Text("No records found"));
 
                     return SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
-                        headingRowColor:
-                            WidgetStatePropertyAll(Colors.grey.shade800),
+                        headingRowColor: WidgetStateProperty.all(purpleTheme),
                         headingTextStyle: const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.bold),
                         columns: const [
-                          DataColumn(label: Text('IC Number')),
-                          DataColumn(label: Text('Name')),
-                          DataColumn(label: Text('Address')),
-                          DataColumn(label: Text('Age')),
-                          DataColumn(label: Text('Mobile')),
+                          DataColumn(label: Text('Patient')),
+                          DataColumn(label: Text('NRIC / IC')),
                           DataColumn(label: Text('Doctor')),
                           DataColumn(label: Text('Date')),
                           DataColumn(label: Text('Slot')),
-                          DataColumn(label: Text('Task / Notes')),
+                          DataColumn(label: Text('Task')),
                         ],
                         rows: docs.map((d) {
                           final data = d.data() as Map<String, dynamic>;
                           return DataRow(cells: [
-                            DataCell(Text(data['ic_number'] ?? '')),
                             DataCell(Text(data['name'] ?? '')),
-                            DataCell(Text(data['address'] ?? '')),
-                            DataCell(Text(data['age'] ?? '')),
-                            DataCell(Text(data['mobile'] ?? '')),
+                            DataCell(Text(data['ic_number'] ?? '')),
                             DataCell(Text(data['doctor'] ?? '')),
                             DataCell(Text(data['availability_date'] ?? '')),
                             DataCell(Text(data['slot_time'] ?? '')),
@@ -517,8 +456,8 @@ class _AppointmentSchedulingPageState extends State<AppointmentSchedulingPage> {
                   },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

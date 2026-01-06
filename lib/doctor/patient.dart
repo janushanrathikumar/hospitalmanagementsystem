@@ -12,82 +12,250 @@ class PatientPage extends StatefulWidget {
 
 class _PatientPageState extends State<PatientPage> {
   final _firestore = FirebaseFirestore.instance;
+  String _searchQuery = "";
+  String _filterGender = "All";
+  String _filterAgeRange = "All";
+
+  // Colors from the design
+  final Color accentGreen = const Color(0xFF3E6E64);
+  final Color bgGrey = const Color(0xFFF8F9FA);
 
   @override
   Widget build(BuildContext context) {
-    const purple = Color(0xFF7B2CBF);
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: DoctorAppBar(), 
-      drawer: DoctorDrawer(), 
+      backgroundColor: bgGrey,
+      appBar: DoctorAppBar(),
+      drawer: DoctorDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Patient Details',
+              'PATIENT LIST',
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-                color: Colors.black87,
-              ),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  letterSpacing: 1.1),
             ),
-            const SizedBox(height: 16),          
+            const SizedBox(height: 20),
+            _buildTopFilterBar(),
+            const SizedBox(height: 16),
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _firestore
-                    .collection('patients')
-                    .orderBy('timestamp', descending: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-
-                  final docs = snapshot.data!.docs;
-                  if (docs.isEmpty) {
-                    return const Center(child: Text('No patient records'));
-                  }
-
-                  return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      headingRowColor:
-                          WidgetStatePropertyAll(Colors.grey.shade800),
-                      headingTextStyle: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      columns: const [
-                        DataColumn(label: Text('IC Number')),
-                        DataColumn(label: Text('Name')),
-                        DataColumn(label: Text('Address')),
-                        DataColumn(label: Text('Age')),
-                        DataColumn(label: Text('Mobile')),
-                      ],
-                      rows: docs.map((d) {
-                        final data = d.data() as Map<String, dynamic>;
-                        return DataRow(cells: [
-                          DataCell(Text(data['ic_number'] ?? '')),
-                          DataCell(Text(data['name'] ?? '')),
-                          DataCell(Text(data['address'] ?? '')),
-                          DataCell(Text(data['age'] ?? '')),
-                          DataCell(Text(data['mobile'] ?? '')),
-                        ]);
-                      }).toList(),
-                    ),
-                  );
-                },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    _buildTableHeader(),
+                    const Divider(height: 1),
+                    Expanded(child: _buildPatientListStream()),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
     );
-  
+  }
+
+  // --- TOP FILTER & SEARCH BAR ---
+  Widget _buildTopFilterBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: TextField(
+              onChanged: (val) =>
+                  setState(() => _searchQuery = val.toLowerCase()),
+              decoration: InputDecoration(
+                hintText: "Search by name or NRIC",
+                prefixIcon: const Icon(Icons.search),
+                isDense: true,
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          _buildDropdown("Gender", ["All", "Male", "Female"], _filterGender,
+              (val) {
+            setState(() => _filterGender = val!);
+          }),
+          const SizedBox(width: 16),
+          _buildDropdown(
+              "Age", ["All", "0-18", "19-40", "41-60", "60+"], _filterAgeRange,
+              (val) {
+            setState(() => _filterAgeRange = val!);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdown(String label, List<String> items, String value,
+      Function(String?) onChanged) {
+    return Row(
+      children: [
+        Text("$label ", style: const TextStyle(fontWeight: FontWeight.w500)),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8)),
+          child: DropdownButton<String>(
+            value: value,
+            underline: const SizedBox(),
+            items: items
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- TABLE HEADER ---
+  Widget _buildTableHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey.shade50,
+      child: const Row(
+        children: [
+          Expanded(
+              child:
+                  Text("Name", style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+              child:
+                  Text("NRIC", style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+              child: Text("Gender",
+                  style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+              child:
+                  Text("Age", style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+              flex: 2,
+              child: Text("Address",
+                  style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+              child:
+                  Text("BMI", style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+              child: Text("BP", style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+              child:
+                  Text("HbA1c", style: TextStyle(fontWeight: FontWeight.bold))),
+          SizedBox(
+              width: 80,
+              child: Text("View",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.bold))),
+        ],
+      ),
+    );
+  }
+
+  // --- LIST CONTENT ---
+  Widget _buildPatientListStream() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore
+          .collection('patients')
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+
+        var docs = snapshot.data!.docs.where((d) {
+          final name = d['name'].toString().toLowerCase();
+          final ic = d['ic_number'].toString();
+          final gender = d['gender'] ?? "";
+
+          bool matchesSearch =
+              name.contains(_searchQuery) || ic.contains(_searchQuery);
+          bool matchesGender =
+              _filterGender == "All" || gender == _filterGender;
+          return matchesSearch && matchesGender;
+        }).toList();
+
+        return ListView.separated(
+          itemCount: docs.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            return _buildPatientRow(data);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPatientRow(Map<String, dynamic> data) {
+    bool isMale = data['gender'] == "Male";
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+              child: Text(data['name'] ?? '',
+                  style: const TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(child: Text(data['ic_number'] ?? '-')),
+          Expanded(
+            child: Row(
+              children: [
+                Icon(isMale ? Icons.person : Icons.person_2,
+                    size: 16, color: isMale ? Colors.blue : Colors.pink),
+                const SizedBox(width: 4),
+                Text(data['gender'] ?? '-'),
+              ],
+            ),
+          ),
+          Expanded(child: Text(data['age']?.toString() ?? '-')),
+          Expanded(
+              flex: 2,
+              child: Text(data['address'] ?? '-',
+                  overflow: TextOverflow.ellipsis)),
+          Expanded(child: Text(data['bmi'] ?? '-')),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(data['bp'] ?? '-'),
+                const Text("mmHg",
+                    style: TextStyle(fontSize: 10, color: Colors.grey)),
+              ],
+            ),
+          ),
+          Expanded(child: Text("${data['hba1c'] ?? '-'}%")),
+          SizedBox(
+            width: 80,
+            child: ElevatedButton(
+              onPressed: () {}, // Navigate to profile
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentGreen,
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6)),
+              ),
+              child: const Text("View",
+                  style: TextStyle(color: Colors.white, fontSize: 12)),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

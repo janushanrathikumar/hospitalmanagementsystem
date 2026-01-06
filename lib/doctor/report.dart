@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 
-// Import doctor header + drawer
 import '../doctor/doctor_appbar.dart';
 import '../doctor/doctor_drawer.dart';
 
@@ -38,8 +37,6 @@ class ClinicReportPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-
-      // ⭐ Your custom appbar & drawer added
       appBar: DoctorAppBar(),
       drawer: DoctorDrawer(),
 

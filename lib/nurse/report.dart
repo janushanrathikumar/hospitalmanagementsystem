@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
-
+import 'nurse_drawer.dart';
+import 'nurse_appbar.dart';
 class ClinicReportPage extends StatelessWidget {
   const ClinicReportPage({super.key});
 
+ 
+  static const Color primaryTeal = Color(0xFF356859);
+  static const Color accentPurple = Color(0xFF6C63FF);
+  static const Color bgCanvas = Color(0xFFF4F7F6);
+  static const Color cardShadow = Color(0x0A000000);
+
   Future<Map<String, dynamic>> _loadReport() async {
     final db = FirebaseFirestore.instance;
-
     final patients = await db.collection('patients').get();
     final appointments = await db.collection('appointments').get();
     final homeVisits = await db.collection('home_visits').get();
@@ -22,7 +28,6 @@ class ClinicReportPage extends StatelessWidget {
       "maternal": maternal.docs,
       "referrals": referrals.docs,
       "staff": users.docs,
-
       "totalPatients": patients.size,
       "totalAppointments": appointments.size,
       "totalHomeVisits": homeVisits.size,
@@ -33,100 +38,82 @@ class ClinicReportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+        const Color bgLight = Color(0xFFF1F2F6);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("🏥 Clinic Overall Report"),
-        backgroundColor: Colors.deepPurple,
-      ),
+     backgroundColor: bgLight,
+      appBar: const NurseAppBar(),
+      drawer: const NurseDrawer(),
       body: FutureBuilder(
         future: _loadReport(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
+          if (!snapshot.hasData)
+            return const Center(
+                child: CircularProgressIndicator(color: primaryTeal));
           final data = snapshot.data as Map<String, dynamic>;
 
           return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Executive Summary",
+                    style:
+                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
 
-                  // 1. SUMMARY
-                  _sectionCard(
-                    title: "📌 1. Clinic Summary",
-                    child: _summaryGrid(data),
-                  ),
+                // 1. STATS GRID
+                _buildModernSummaryGrid(data),
+                const SizedBox(height: 32),
 
-                  // 2. APPOINTMENT TRENDS
-                  _sectionCard(
-                    title: "📈 2. Monthly Appointment Trend",
-                    child: SizedBox(
-                      height: 250,
-                      child: _appointmentLineChart(data["appointments"]),
+                // 2. ANALYTICS ROW (Charts)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: _sectionCard(
+                        title: "Appointment Trends",
+                        child: SizedBox(
+                            height: 300,
+                            child: _appointmentLineChart(data["appointments"])),
+                      ),
                     ),
-                  ),
-
-                  // 3. SERVICE COMPARISON
-                  _sectionCard(
-                    title: "📊 3. Service Usage Comparison",
-                    child: SizedBox(
-                      height: 250,
-                      child: _serviceBarChart(data),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      flex: 1,
+                      child: _sectionCard(
+                        title: "Demographics",
+                        child: SizedBox(
+                            height: 300,
+                            child: _patientPieChart(data["patients"])),
+                      ),
                     ),
-                  ),
+                  ],
+                ),
 
-                  // 4. PATIENT AGE DEMOGRAPHICS
-                  _sectionCard(
-                    title: "🥧 4. Patient Demographics",
-                    child: SizedBox(
-                      height: 250,
-                      child: _patientPieChart(data["patients"]),
-                    ),
-                  ),
+                // 3. SERVICE BAR CHART
+                _sectionCard(
+                  title: "Service Volume Comparison",
+                  child: SizedBox(height: 200, child: _serviceBarChart(data)),
+                ),
 
-                  // 5. APPOINTMENTS TABLE
-                  _sectionCard(
-                    title: "📅 5. Appointment Summary",
-                    child: _appointmentSummary(data["appointments"]),
-                  ),
+                // 4. DETAILED TABLES
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Text("Detailed Activity Logs",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ),
 
-                  // 6. HOME VISITS
-                  _sectionCard(
-                    title: "🏠 6. Home Visit Report",
-                    child: _scrollTable(data['homeVisits'], [
-                      'name', 'ic_number', 'doctor', 'visit_date', 'task', 'summary'
-                    ]),
-                  ),
+                _expandableTableCard("Referral Report", data['referrals'],
+                    ['patientName', 'date', 'reason', 'referrerOrg']),
+                _expandableTableCard("Home Visit Logs", data['homeVisits'],
+                    ['name', 'doctor', 'visit_date', 'task']),
+                _expandableTableCard("Maternal Health", data['maternal'],
+                    ['patient', 'type', 'visit_date', 'risk_sign']),
 
-                  // 7. MATERNAL & CHILD CARE
-                  _sectionCard(
-                    title: "🤰 7. Maternal & Child Health Report",
-                    child: _scrollTable(data['maternal'], [
-                      'patient', 'type', 'visit_date', 'risk_sign', 'vaccination_status'
-                    ]),
-                  ),
-
-                  // 8. REFERRAL REPORT
-                  _sectionCard(
-                    title: "📤 8. Referral Report",
-                    child: _scrollTable(data['referrals'], [
-                      'patientName', 'patientNric', 'date', 'reason', 'referrerOrg'
-                    ]),
-                  ),
-
-                  // 9. STAFF
-                  _sectionCard(
-                    title: "👩‍⚕️ 9. Staff Activity Summary",
-                    child: _scrollTable(data['staff'], [
-                      'name', 'role', 'appointments', 'home_visits', 'referrals'
-                    ]),
-                  ),
-
-                  const SizedBox(height: 100),
-                ],
-              ),
+                const SizedBox(height: 50),
+              ],
             ),
           );
         },
@@ -134,286 +121,271 @@ class ClinicReportPage extends StatelessWidget {
     );
   }
 
-  // ------------------------------
-  // SECTION CARD UI
-  // ------------------------------
-  Widget _sectionCard({required String title, required Widget child}) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      margin: const EdgeInsets.only(bottom: 25),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
-                )),
-            const SizedBox(height: 12),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
+  // --- UI COMPONENTS ---
 
-  // ------------------------------
-  // SUMMARY GRID
-  // ------------------------------
-  Widget _summaryGrid(Map<String, dynamic> data) {
-    return GridView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      children: [
-        _summaryItem("Patients", data['totalPatients'], Icons.people),
-        _summaryItem("Appointments", data['totalAppointments'], Icons.calendar_today),
-        _summaryItem("Home Visits", data['totalHomeVisits'], Icons.home),
-        _summaryItem("Maternal Cases", data['totalMaternal'], Icons.pregnant_woman),
-        _summaryItem("Referrals", data['totalReferrals'], Icons.send),
-      ],
-    );
-  }
-
-  Widget _summaryItem(String label, int value, IconData icon) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.deepPurple.withOpacity(.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Row(
+  Widget _buildModernSummaryGrid(Map<String, dynamic> data) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return Wrap(
+        spacing: 16,
+        runSpacing: 16,
         children: [
-          Icon(icon, color: Colors.deepPurple),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("$value",
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
-              Text(label),
-            ],
+          _statTile("Total Patients", data['totalPatients'],
+              Icons.people_outline, Colors.blue),
+          _statTile("Appointments", data['totalAppointments'],
+              Icons.event_available, accentPurple),
+          _statTile("Home Visits", data['totalHomeVisits'], Icons.home_outlined,
+              Colors.orange),
+          _statTile("Maternal Health", data['totalMaternal'], Icons.child_care,
+              Colors.pink),
+          _statTile("Active Referrals", data['totalReferrals'],
+              Icons.description_outlined, Colors.teal),
+        ],
+      );
+    });
+  }
+
+  Widget _statTile(String label, int value, IconData icon, Color color) {
+    return Container(
+      width: 200,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: cardShadow, blurRadius: 10, offset: Offset(0, 4))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: color.withOpacity(0.1),
+            radius: 20,
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 16),
+          Text("$value",
+              style:
+                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(label,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionCard({required String title, required Widget child}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: primaryTeal)),
+          const Divider(height: 32),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _expandableTableCard(
+      String title, List<QueryDocumentSnapshot> docs, List<String> fields) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 0,
+      borderOnForeground: true,
+      child: ExpansionTile(
+        title: Text(title,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+        leading: const Icon(Icons.table_chart_outlined, color: primaryTeal),
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
+              columns: fields
+                  .map((f) => DataColumn(
+                      label: Text(f.toUpperCase(),
+                          style: const TextStyle(fontSize: 11))))
+                  .toList(),
+              rows: docs.map((d) {
+                final row = d.data() as Map<String, dynamic>;
+                return DataRow(
+                    cells: fields
+                        .map((f) => DataCell(Text(row[f]?.toString() ?? "-",
+                            style: const TextStyle(fontSize: 12))))
+                        .toList());
+              }).toList(),
+            ),
           )
         ],
       ),
     );
   }
 
-  // ------------------------------
-  // LINE CHART - APPOINTMENTS PER MONTH
-  // ------------------------------
-  Widget _appointmentLineChart(List<QueryDocumentSnapshot> docs) {
-    Map<int, int> monthly = {};
+  // --- CHARTS (Updated Styling) ---
 
+  Widget _appointmentLineChart(List<QueryDocumentSnapshot> docs) {
+    Map<int, int> monthly = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+      6: 0,
+      7: 0,
+      8: 0,
+      9: 0,
+      10: 0,
+      11: 0,
+      12: 0
+    };
     for (var d in docs) {
       final date = DateTime.tryParse(d['availability_date'] ?? "");
-      if (date == null) continue;
-      monthly[date.month] = (monthly[date.month] ?? 0) + 1;
+      if (date != null) monthly[date.month] = (monthly[date.month] ?? 0) + 1;
     }
 
     return LineChart(
       LineChartData(
-        borderData: FlBorderData(show: true),
+        gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            getDrawingHorizontalLine: (value) =>
+                FlLine(color: Colors.grey.shade100, strokeWidth: 1)),
         titlesData: FlTitlesData(
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                const months = [
-                  "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-                ];
-                return Text(months[value.toInt()]);
-              },
-            ),
-          ),
+              sideTitles: SideTitles(
+                  showTitles: true,
+                  getTitlesWidget: (val, _) {
+                    const months = [
+                      "Jan",
+                      "Feb",
+                      "Mar",
+                      "Apr",
+                      "May",
+                      "Jun",
+                      "Jul",
+                      "Aug",
+                      "Sep",
+                      "Oct",
+                      "Nov",
+                      "Dec"
+                    ];
+                    return val.toInt() >= 1 && val.toInt() <= 12
+                        ? Text(months[val.toInt() - 1],
+                            style: const TextStyle(fontSize: 10))
+                        : const SizedBox();
+                  })),
         ),
+        borderData: FlBorderData(show: false),
         lineBarsData: [
           LineChartBarData(
             spots: monthly.entries
-                .map((e) =>
-                    FlSpot(e.key.toDouble(), e.value.toDouble()))
+                .map((e) => FlSpot(e.key.toDouble(), e.value.toDouble()))
                 .toList(),
             isCurved: true,
-            color: Colors.deepPurple,
-            barWidth: 4,
-            dotData: FlDotData(show: true),
+            color: primaryTeal,
+            barWidth: 3,
+            dotData: const FlDotData(show: false),
+            belowBarData:
+                BarAreaData(show: true, color: primaryTeal.withOpacity(0.05)),
           ),
         ],
       ),
     );
   }
 
-  // ------------------------------
-  // BAR CHART - SERVICE COMPARISON
-  // ------------------------------
+  Widget _patientPieChart(List<QueryDocumentSnapshot> patients) {
+    int child = 0, adult = 0, elderly = 0;
+    for (var p in patients) {
+      final age = int.tryParse(p['age']?.toString() ?? "");
+      if (age == null) continue;
+      if (age < 12)
+        child++;
+      else if (age < 60)
+        adult++;
+      else
+        elderly++;
+    }
+    return PieChart(
+      PieChartData(
+        sectionsSpace: 4,
+        centerSpaceRadius: 50,
+        sections: [
+          PieChartSectionData(
+              value: child.toDouble(),
+              color: Colors.blueAccent,
+              title: 'Child',
+              radius: 50,
+              titleStyle: const TextStyle(color: Colors.white, fontSize: 10)),
+          PieChartSectionData(
+              value: adult.toDouble(),
+              color: accentPurple,
+              title: 'Adult',
+              radius: 55,
+              titleStyle: const TextStyle(color: Colors.white, fontSize: 10)),
+          PieChartSectionData(
+              value: elderly.toDouble(),
+              color: Colors.orangeAccent,
+              title: 'Elderly',
+              radius: 50,
+              titleStyle: const TextStyle(color: Colors.white, fontSize: 10)),
+        ],
+      ),
+    );
+  }
+
   Widget _serviceBarChart(Map<String, dynamic> data) {
     return BarChart(
       BarChartData(
+        alignment: BarChartAlignment.spaceAround,
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
+          leftTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                const labels = ["Appt", "Home", "Maternal", "Refer"];
-                return Text(labels[value.toInt()]);
-              },
-            ),
-          ),
+              sideTitles: SideTitles(
+                  showTitles: true,
+                  getTitlesWidget: (v, _) {
+                    const labs = ["Appt", "Home", "Maternal", "Refer"];
+                    return Text(labs[v.toInt()],
+                        style: const TextStyle(fontSize: 10));
+                  })),
         ),
         barGroups: [
-          BarChartGroupData(x: 0, barRods: [
-            BarChartRodData(
-              toY: data["totalAppointments"].toDouble(),
-              color: Colors.blue
-            )
-          ]),
-          BarChartGroupData(x: 1, barRods: [
-            BarChartRodData(
-              toY: data["totalHomeVisits"].toDouble(),
-              color: Colors.green
-            )
-          ]),
-          BarChartGroupData(x: 2, barRods: [
-            BarChartRodData(
-              toY: data["totalMaternal"].toDouble(),
-              color: Colors.orange
-            )
-          ]),
-          BarChartGroupData(x: 3, barRods: [
-            BarChartRodData(
-              toY: data["totalReferrals"].toDouble(),
-              color: Colors.red
-            )
-          ]),
+          _makeGroup(0, data["totalAppointments"].toDouble(), accentPurple),
+          _makeGroup(1, data["totalHomeVisits"].toDouble(), Colors.orange),
+          _makeGroup(2, data["totalMaternal"].toDouble(), Colors.pink),
+          _makeGroup(3, data["totalReferrals"].toDouble(), Colors.teal),
         ],
       ),
     );
   }
 
-  // ------------------------------
-  // PIE CHART - PATIENT AGE DEMOGRAPHICS
-  // ------------------------------
-  Widget _patientPieChart(List<QueryDocumentSnapshot> patients) {
-    int child = 0, adult = 0, elderly = 0;
-
-    for (var p in patients) {
-      final ageStr = p['age']?.toString();
-      final age = int.tryParse(ageStr ?? "");
-      if (age == null) continue;
-
-      if (age < 12) child++;
-      else if (age < 60) adult++;
-      else elderly++;
-    }
-
-    return PieChart(
-      PieChartData(
-        centerSpaceRadius: 40,
-        sectionsSpace: 2,
-        sections: [
-          PieChartSectionData(
-            value: child.toDouble(),
-            color: Colors.blue,
-            title: "Child",
-          ),
-          PieChartSectionData(
-            value: adult.toDouble(),
-            color: Colors.green,
-            title: "Adult",
-          ),
-          PieChartSectionData(
-            value: elderly.toDouble(),
-            color: Colors.orange,
-            title: "Elderly",
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ------------------------------
-  // TABLE (SCROLLABLE)
-  // ------------------------------
-  Widget _scrollTable(List<QueryDocumentSnapshot> docs, List<String> fields) {
-    if (docs.isEmpty) return const Text("No records available");
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: _tableList(docs, fields),
-    );
-  }
-
-  Widget _tableList(List<QueryDocumentSnapshot> docs, List<String> fields) {
-    return Table(
-      border: TableBorder.all(color: Colors.grey.shade400),
-      defaultColumnWidth: const IntrinsicColumnWidth(),
-      children: [
-        // HEADER
-        TableRow(
-          decoration: BoxDecoration(color: Colors.grey.shade200),
-          children: fields
-              .map((f) => Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Text(
-                      f.toUpperCase(),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ))
-              .toList(),
-        ),
-
-        // DATA
-        ...docs.map((d) {
-          final row = d.data() as Map<String, dynamic>;
-          return TableRow(
-            children: fields
-                .map((f) => Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Text(
-                        row[f]?.toString() ?? "-",
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ))
-                .toList(),
-          );
-        })
-      ],
-    );
-  }
-
-  // ------------------------------
-  // APPOINTMENT SUMMARY BOXES
-  // ------------------------------
-  Widget _appointmentSummary(List<QueryDocumentSnapshot> docs) {
-    int upcoming = 0, past = 0;
-
-    for (var d in docs) {
-      final date = DateTime.tryParse(d['availability_date'] ?? "");
-      if (date == null) continue;
-
-      if (date.isAfter(DateTime.now())) upcoming++;
-      else past++;
-    }
-
-    return Column(
-      children: [
-        _summaryItem("Upcoming", upcoming, Icons.arrow_forward),
-        const SizedBox(height: 12),
-        _summaryItem("Past", past, Icons.check_circle),
-      ],
-    );
+  BarChartGroupData _makeGroup(int x, double y, Color color) {
+    return BarChartGroupData(x: x, barRods: [
+      BarChartRodData(
+          toY: y,
+          color: color,
+          width: 18,
+          borderRadius: BorderRadius.circular(4))
+    ]);
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'adminappbar.dart'; // Make sure this path is correct
-
+import 'adminappbar.dart'; 
 class PatientPage extends StatefulWidget {
   const PatientPage({super.key});
 
@@ -18,8 +17,8 @@ class _PatientPageState extends State<PatientPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AdminAppBar(), // remove const for dynamic rebuild
-      drawer: AdminDrawer(), // remove const
+      appBar: AdminAppBar(), 
+      drawer: AdminDrawer(), 
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -35,7 +34,7 @@ class _PatientPageState extends State<PatientPage> {
             ),
             const SizedBox(height: 16),
 
-            // Expanded to make table scrollable within column
+           
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: _firestore
