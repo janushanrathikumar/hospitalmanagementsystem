@@ -23,11 +23,7 @@ class DoctorAppBar extends StatelessWidget implements PreferredSizeWidget {
         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_none_outlined,
-              color: Colors.white),
-          onPressed: () {},
-        ),
+       
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: ElevatedButton(

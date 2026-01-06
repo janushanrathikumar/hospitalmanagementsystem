@@ -25,11 +25,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
         'ADMIN DASHBOARD',
         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_none_outlined),
-          onPressed: () {},
-        ),
+      actions: [      
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: ElevatedButton(
