@@ -34,14 +34,7 @@ class NurseAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.print_outlined, color: Colors.black87),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.notifications_none_outlined, color: Colors.black87),
-          onPressed: () {},
-        ),
+
         const SizedBox(width: 8),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
