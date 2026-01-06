@@ -18,7 +18,7 @@ class ChatMessage {
 String _filterGender = "All";
 String _filterAgeRange = "All";
 int _currentPage = 1;
-int _rowsPerPage = 10; 
+int _rowsPerPage = 10;
 
 class NurseHome1 extends StatefulWidget {
   const NurseHome1({super.key});
@@ -28,12 +28,10 @@ class NurseHome1 extends StatefulWidget {
 }
 
 class _NurseHomeState extends State<NurseHome1> {
-
   static const Color sidebarPurple = Color(0xFF7B2CBF);
   static const Color accentGreen = Color(0xFF426A5A);
   static const Color bgColor = Color(0xFFF3F4F8);
 
- 
   final _nameController = TextEditingController();
   final _icController = TextEditingController();
   final _ageController = TextEditingController();
@@ -51,11 +49,10 @@ class _NurseHomeState extends State<NurseHome1> {
   final TextEditingController _treatmentController = TextEditingController();
   String _selectedGender = "Female";
 
-  final _chatController =
-      TextEditingController(); 
+  final _chatController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
-  bool _loading = false; 
+  bool _loading = false;
 
   late final GenerativeModel _model;
   bool _isChatVisible = false;
@@ -70,8 +67,7 @@ class _NurseHomeState extends State<NurseHome1> {
       return;
     }
     _model = GenerativeModel(
-      model:
-          'gemini-2.5-flash', 
+      model: 'gemini-2.5-flash',
       apiKey: apiKey,
     );
   }
@@ -82,7 +78,6 @@ class _NurseHomeState extends State<NurseHome1> {
     _scrollController.dispose();
     super.dispose();
   }
-
 
   void _toggleChat() {
     setState(() {
@@ -167,7 +162,6 @@ class _NurseHomeState extends State<NurseHome1> {
 
     String extractedText = '';
 
-   
     if (!(bytes.length >= 4 &&
         bytes[0] == 0x25 &&
         bytes[1] == 0x50 &&
@@ -391,8 +385,7 @@ class _NurseHomeState extends State<NurseHome1> {
               ElevatedButton(
                 onPressed: _savePatientToFirebase,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(
-                      0xFF4A6962),
+                  backgroundColor: const Color(0xFF4A6962),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                   shape: RoundedRectangleBorder(
@@ -402,7 +395,7 @@ class _NurseHomeState extends State<NurseHome1> {
                     style: TextStyle(color: Colors.white)),
               ),
               OutlinedButton.icon(
-                onPressed: () {}, 
+                onPressed: () {},
                 icon: const Icon(Icons.print, size: 18),
                 label: const Text("Print PDF"),
                 style: OutlinedButton.styleFrom(
@@ -784,19 +777,19 @@ class _NurseHomeState extends State<NurseHome1> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // View Button
-          ElevatedButton.icon(
-            onPressed: () {
-              // Logic to view details
-            },
-            icon: const Icon(Icons.visibility, size: 18, color: Colors.white),
-            label: const Text("View All Details",
-                style: TextStyle(color: Colors.white)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accentGreen,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-          ),
+          // // View Button
+          // ElevatedButton.icon(
+          //   onPressed: () {
+          //     // Logic to view details
+          //   },
+          //   icon: const Icon(Icons.visibility, size: 18, color: Colors.white),
+          //   label: const Text("View All Details",
+          //       style: TextStyle(color: Colors.white)),
+          //   style: ElevatedButton.styleFrom(
+          //     backgroundColor: accentGreen,
+          //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          //   ),
+          // ),
 
           // Pagination Numbers
           Row(

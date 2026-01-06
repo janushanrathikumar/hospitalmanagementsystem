@@ -197,12 +197,11 @@ class _MaternalChildCarePageState extends State<MaternalChildCarePage> {
                        foregroundColor: Colors.white,  
                     ),
                     onPressed: () async {
-                      if (icCtrl.text.isEmpty ||
-                          selectedDate == null ||
+                      if (icCtrl.text.isEmpty ||                          
                           typeCtrl.text.isEmpty ||
                           vaccinationCtrl.text.isEmpty ||
-                          riskSignCtrl.text.isEmpty ||
-                          name == null) {
+                          riskSignCtrl.text.isEmpty 
+                          ) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Please fill all fields')),

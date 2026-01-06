@@ -180,16 +180,6 @@ class _HomeVisitTrackingPageState extends State<HomeVisitTrackingPage> {
                     ],
                   ),
                 ),
-                OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.grey.shade300),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text("Edit Details",
-                      style: TextStyle(color: Colors.black)),
-                )
               ],
             ),
           ),
@@ -213,8 +203,7 @@ class _HomeVisitTrackingPageState extends State<HomeVisitTrackingPage> {
                 DataColumn(label: Text('Visit Date')),
                 DataColumn(label: Text('Status')),
                 DataColumn(label: Text('Summary')),
-                DataColumn(label: Text('Task')),
-                DataColumn(label: Text('Action')),
+                DataColumn(label: Text('Task'))
               ],
               rows: [
                 DataRow(cells: [
@@ -236,18 +225,7 @@ class _HomeVisitTrackingPageState extends State<HomeVisitTrackingPage> {
                   ),
                   DataCell(Text(data['summary'] ?? '')),
                   DataCell(Text(data['task'] ?? '')),
-                  DataCell(
-                    SizedBox(
-                      height: 35,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryTeal, elevation: 0),
-                        child: const Text("View",
-                            style: TextStyle(color: Colors.white)),
-                      ),
-                    ),
-                  ),
+                  
                 ]),
               ],
             ),
