@@ -6,7 +6,7 @@ class NurseAppBar extends StatelessWidget implements PreferredSizeWidget {
   const NurseAppBar({super.key});
 
   @override
-  Size get preferredSize => const Size.fromHeight(70); // Slightly taller for a modern look
+  Size get preferredSize => const Size.fromHeight(70);
 
   Future<void> _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
@@ -19,32 +19,33 @@ class NurseAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Matching the purple from your Patient Details table
+    const purple = Color(0xFF7B2CBF);
+
     return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
+      backgroundColor: purple, // Changed to purple
+      elevation: 4, // Slight shadow for depth
       centerTitle: false,
-      iconTheme: const IconThemeData(color: Colors.black87),
+      // IconTheme makes the drawer (hamburger) icon white
+      iconTheme: const IconThemeData(color: Colors.white), 
       title: const Text(
         'CLINIC INFORMATION SYSTEM',
         style: TextStyle(
-          color: Colors.black54,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1.1,
+          color: Colors.white, // Text changed to white
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
         ),
       ),
       actions: [
-
-        const SizedBox(width: 8),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-          child: ElevatedButton(
+          child: OutlinedButton( // Changed to Outlined for a cleaner look on purple
             onPressed: () => _logout(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF23262F), // Dark grey/black from image
+            style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
+              side: const BorderSide(color: Colors.white, width: 1.5),
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -56,10 +57,6 @@ class NurseAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: Colors.grey.withOpacity(0.2), height: 1),
-      ),
     );
   }
 }

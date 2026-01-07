@@ -14,8 +14,7 @@ class _HomeVisitTrackingPageState extends State<HomeVisitTrackingPage> {
   final _firestore = FirebaseFirestore.instance;
   String _searchQuery = "";
 
-  final Color primaryTeal =
-      const Color(0xFF356859); 
+  final Color primaryTeal = const Color(0xFF356859);
   final Color bgLight = const Color(0xFFF8F9FA);
   final Color statusBlueBg = const Color(0xFFE0F2F1);
   final Color statusBlueText = const Color(0xFF4DB6AC);
@@ -158,11 +157,6 @@ class _HomeVisitTrackingPageState extends State<HomeVisitTrackingPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CircleAvatar(
-                  radius: 30,
-                  backgroundImage:
-                      NetworkImage('https://i.pravatar.cc/150?u=931122'),
-                ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -225,7 +219,6 @@ class _HomeVisitTrackingPageState extends State<HomeVisitTrackingPage> {
                   ),
                   DataCell(Text(data['summary'] ?? '')),
                   DataCell(Text(data['task'] ?? '')),
-                  
                 ]),
               ],
             ),
@@ -234,329 +227,326 @@ class _HomeVisitTrackingPageState extends State<HomeVisitTrackingPage> {
       ),
     );
   }
+
   Widget _buildSectionLabel(String text) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      text,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: Theme.of(context).colorScheme.primary,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-Future<void> _addRecordDialog() async {
-  final icCtrl = TextEditingController();
-  final doctorCtrl = TextEditingController();
-  final summaryCtrl = TextEditingController();
-  final taskCtrl = TextEditingController();
-const Color purpleTheme = Color(0xFF4A3469);
-  final bpCtrl = TextEditingController();
-  final hbA1cCtrl = TextEditingController();
+  Future<void> _addRecordDialog() async {
+    final icCtrl = TextEditingController();
+    final doctorCtrl = TextEditingController();
+    final summaryCtrl = TextEditingController();
+    final taskCtrl = TextEditingController();
+    const Color purpleTheme = Color(0xFF4A3469);
+    final bpCtrl = TextEditingController();
+    final hbA1cCtrl = TextEditingController();
 
-  String? patientName;
-  String? address;
-  String? age;
-  DateTime? selectedDate;
+    String? patientName;
+    String? address;
+    String? age;
+    DateTime? selectedDate;
 
-  List<DocumentSnapshot> icSuggestions = [];
+    List<DocumentSnapshot> icSuggestions = [];
 
-  await showDialog(
-    context: context,
-    builder: (_) => StatefulBuilder(
-      builder: (context, setDialogState) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: const Color(0xFFF8F9FA),
-        child: Container(
-          width: 800,
-          padding: const EdgeInsets.all(30),
-          decoration: BoxDecoration(
-            color: const Color(0xFFECE6F0),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.home_filled, color: purpleTheme, size: 28),
-                    const SizedBox(width: 12),
-                    const Text(
-                      "New Home Visit",
-                      style:
-                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const Divider(height: 32),
-
-               
-                _buildSectionLabel("Patient Search"),
-                TextField(
-                  controller: icCtrl,
-                  decoration: InputDecoration(
-                    hintText: 'Enter NRIC / IC Number',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)),
+    await showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: const Color(0xFFF8F9FA),
+          child: Container(
+            width: 800,
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECE6F0),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.home_filled, color: purpleTheme, size: 28),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "New Home Visit",
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
-                  onChanged: (val) async {
-                    if (val.length >= 1) {
-                      final snap = await _firestore
-                          .collection('patients')
-                          .where('ic_number',
-                              isGreaterThanOrEqualTo: val)
-                          .where('ic_number',
-                              isLessThanOrEqualTo: '$val\uf8ff')
-                          .limit(5)
-                          .get();
+                  const Divider(height: 32),
 
-                      setDialogState(() {
-                        icSuggestions = snap.docs;
-                      });
-                    } else {
-                      setDialogState(() => icSuggestions = []);
-                    }
-                  },
-                ),
+                  _buildSectionLabel("Patient Search"),
+                  TextField(
+                    controller: icCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Enter NRIC / IC Number',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onChanged: (val) async {
+                      if (val.length >= 1) {
+                        final snap = await _firestore
+                            .collection('patients')
+                            .where('ic_number', isGreaterThanOrEqualTo: val)
+                            .where('ic_number',
+                                isLessThanOrEqualTo: '$val\uf8ff')
+                            .limit(5)
+                            .get();
 
-                if (icSuggestions.isNotEmpty)
-                  Container(
-                    margin: const EdgeInsets.only(top: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [
-                        BoxShadow(color: Colors.black12, blurRadius: 4)
-                      ],
-                    ),
-                    child: Column(
-                      children: icSuggestions.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        return ListTile(
-                          leading: const Icon(Icons.person),
-                          title: Text(data['name'] ?? ''),
-                          subtitle: Text(data['ic_number'] ?? ''),
-                          onTap: () {
-                            setDialogState(() {
-                              icCtrl.text = data['ic_number'];
-                              patientName = data['name'];
-                              address = data['address'];
-                              age = data['age'];
-                              icSuggestions = [];
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
+                        setDialogState(() {
+                          icSuggestions = snap.docs;
+                        });
+                      } else {
+                        setDialogState(() => icSuggestions = []);
+                      }
+                    },
                   ),
 
-                if (patientName != null)
-                  Container(
-                    margin: const EdgeInsets.only(top: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: purpleTheme.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(10),
-                      border:
-                          Border.all(color: purpleTheme.withOpacity(0.2)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.check_circle, color: Colors.green),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            "$patientName ($age yrs)\n$address",
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                const SizedBox(height: 24),
-
-                _buildSectionLabel("Visit Information"),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: doctorCtrl,
-                        decoration: InputDecoration(
-                          labelText: "Doctor Name",
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
+                  if (icSuggestions.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black12, blurRadius: 4)
+                        ],
+                      ),
+                      child: Column(
+                        children: icSuggestions.map((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          return ListTile(
+                            leading: const Icon(Icons.person),
+                            title: Text(data['name'] ?? ''),
+                            subtitle: Text(data['ic_number'] ?? ''),
+                            onTap: () {
+                              setDialogState(() {
+                                icCtrl.text = data['ic_number'];
+                                patientName = data['name'];
+                                address = data['address'];
+                                age = data['age'];
+                                icSuggestions = [];
+                              });
+                            },
+                          );
+                        }).toList(),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime(2100),
-                          );
-                          if (date != null) {
-                            setDialogState(() => selectedDate = date);
-                          }
-                        },
-                        child: InputDecorator(
+
+                  if (patientName != null)
+                    Container(
+                      margin: const EdgeInsets.only(top: 16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: purpleTheme.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: purpleTheme.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle, color: Colors.green),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "$patientName ($age yrs)\n$address",
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionLabel("Visit Information"),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: doctorCtrl,
                           decoration: InputDecoration(
-                            labelText: "Visit Date",
+                            labelText: "Doctor Name",
                             filled: true,
                             fillColor: Colors.grey.shade50,
                             border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10)),
                           ),
-                          child: Text(
-                            selectedDate == null
-                                ? "Select date"
-                                : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2100),
+                            );
+                            if (date != null) {
+                              setDialogState(() => selectedDate = date);
+                            }
+                          },
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: "Visit Date",
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: Text(
+                              selectedDate == null
+                                  ? "Select date"
+                                  : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
 
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: bpCtrl,
-                        decoration: InputDecoration(
-                          labelText: "BP (mmHg)",
-                          hintText: "120/80",
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: bpCtrl,
+                          decoration: InputDecoration(
+                            labelText: "BP (mmHg)",
+                            hintText: "120/80",
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: hbA1cCtrl,
-                        decoration: InputDecoration(
-                          labelText: "HbA1c (%)",
-                          hintText: "6.5",
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: hbA1cCtrl,
+                          decoration: InputDecoration(
+                            labelText: "HbA1c (%)",
+                            hintText: "6.5",
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller: summaryCtrl,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: "Clinical Summary",
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                    ],
                   ),
-                ),
 
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                TextField(
-                  controller: taskCtrl,
-                  decoration: InputDecoration(
-                    labelText: "Task / Action Required",
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                  TextField(
+                    controller: summaryCtrl,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      labelText: "Clinical Summary",
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 32),
+                  const SizedBox(height: 12),
 
-                /// ---------- ACTION BUTTON ----------
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("Cancel"),
+                  TextField(
+                    controller: taskCtrl,
+                    decoration: InputDecoration(
+                      labelText: "Task / Action Required",
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: purpleTheme,
-                        minimumSize: const Size(220, 55),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: () async {
-                        if (patientName == null || selectedDate == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text("Please complete all fields")),
-                          );
-                          return;
-                        }
+                  ),
 
-                        await _firestore.collection('home_visits').add({
-                          'name': patientName,
-                          'ic_number': icCtrl.text,
-                          'age': age,
-                          'address': address,
-                          'doctor': doctorCtrl.text,
-                          'visit_date':
-                              "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
-                          'summary': summaryCtrl.text,
-                          'task': taskCtrl.text,
-                          'bp': bpCtrl.text,
-                          'hba1c': hbA1cCtrl.text,
-                          'status': 'Upcoming',
-                          'timestamp': FieldValue.serverTimestamp(),
-                        });
+                  const SizedBox(height: 32),
 
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        "SAVE VISIT",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold),
+                  /// ---------- ACTION BUTTON ----------
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Cancel"),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: purpleTheme,
+                          minimumSize: const Size(220, 55),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () async {
+                          if (patientName == null || selectedDate == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text("Please complete all fields")),
+                            );
+                            return;
+                          }
+
+                          await _firestore.collection('home_visits').add({
+                            'name': patientName,
+                            'ic_number': icCtrl.text,
+                            'age': age,
+                            'address': address,
+                            'doctor': doctorCtrl.text,
+                            'visit_date':
+                                "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                            'summary': summaryCtrl.text,
+                            'task': taskCtrl.text,
+                            'bp': bpCtrl.text,
+                            'hba1c': hbA1cCtrl.text,
+                            'status': 'Upcoming',
+                            'timestamp': FieldValue.serverTimestamp(),
+                          });
+
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          "SAVE VISIT",
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _dialogFieldInline(String label, TextEditingController controller,
       {String? hint, int maxLines = 1}) {
@@ -589,8 +579,8 @@ const Color purpleTheme = Color(0xFF4A3469);
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                  color: Color(0xFF4A345C), width: 1.5), 
+              borderSide:
+                  const BorderSide(color: Color(0xFF4A345C), width: 1.5),
             ),
           ),
         ),

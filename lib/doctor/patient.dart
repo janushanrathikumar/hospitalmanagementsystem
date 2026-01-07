@@ -158,11 +158,7 @@ class _PatientPageState extends State<PatientPage> {
           Expanded(
               child:
                   Text("HbA1c", style: TextStyle(fontWeight: FontWeight.bold))),
-          SizedBox(
-              width: 80,
-              child: Text("View",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.bold))),
+          
         ],
       ),
     );
@@ -240,20 +236,7 @@ class _PatientPageState extends State<PatientPage> {
             ),
           ),
           Expanded(child: Text("${data['hba1c'] ?? '-'}%")),
-          SizedBox(
-            width: 80,
-            child: ElevatedButton(
-              onPressed: () {}, // Navigate to profile
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accentGreen,
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6)),
-              ),
-              child: const Text("View",
-                  style: TextStyle(color: Colors.white, fontSize: 12)),
-            ),
-          ),
+        
         ],
       ),
     );
