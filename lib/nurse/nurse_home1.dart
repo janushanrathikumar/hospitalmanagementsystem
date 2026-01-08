@@ -62,7 +62,7 @@ class _NurseHomeState extends State<NurseHome1> {
   void initState() {
     super.initState();
     final apiKey = dotenv.env['GEMINI_API_KEY'] ??
-        "AIzaSyBqOz61PLMxLEIgt8YIuUGYzwVx7CWNQBo";
+        "AIzaSyCvU0Qe_2u4N25xT0wng45eiNN0IQtHxdY";
     if (apiKey == null) {
       debugPrint('API key not found. Make sure to set it in .env file');
       return;

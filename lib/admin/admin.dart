@@ -44,65 +44,61 @@ class AdminPage extends StatelessWidget {
     );
   }
 
-  // --- UI COMPONENTS ---
 Widget _buildClinicOverviewSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-          color: Colors.white, 
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 2,
-              blurRadius: 5,
-            )
-          ]),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Clinic Overview',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            
-            childAspectRatio: 1.5, 
-            mainAxisSpacing: 15,
-            crossAxisSpacing: 15,
-            children: [
-              _StatTile(
-                  label: 'Total Patients',
-                  collection: 'patients',
-                  color: Colors.blue),
-              _StatTile(
-                  label: 'Total Appointments',
-                  collection: 'appointments',
-                  color: Colors.purple),
-              _StatTile(
-                  label: 'Total Home Visits',
-                  collection: 'home_visits',
-                  color: Colors.green),
-              _StatTile(
-                  label: 'Maternal Cases',
-                  collection: 'maternal_child_care',
-                  color: Colors.pink),
-              _StatTile(
-                  label: 'Total Referrals',
-                  collection: 'referral_letters',
-                  color: Colors.orange),
-              _StatTile(
-                  label: 'Active Staff',
-                  collection: 'users',
-                  color: Colors.indigo),
-            ],
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Clinic Overview',
+        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF2D3142)),
+      ),
+      const SizedBox(height: 20),
+      Wrap(
+        spacing: 16,
+        runSpacing: 16,
+        children: const [
+          _StatTile(
+            label: 'Total Patients',
+            collection: 'patients',
+            icon: Icons.people_outline,
+            color: Colors.blue,
+          ),
+          _StatTile(
+            label: 'Appointments',
+            collection: 'appointments',
+            icon: Icons.event_available,
+            color: Colors.purple,
+          ),
+          _StatTile(
+            label: 'Home Visits',
+            collection: 'home_visits',
+            icon: Icons.home_outlined,
+            color: Colors.orange,
+          ),
+          _StatTile(
+            label: 'Maternal Cases',
+            collection: 'maternal_child_care',
+            icon: Icons.child_care,
+            color: Colors.pink,
+          ),
+          _StatTile(
+            label: 'Total Referrals',
+            collection: 'referral_letters',
+            icon: Icons.description_outlined,
+            color: Colors.teal,
+          ),
+          _StatTile(
+            label: 'Active Staff',
+            collection: 'users',
+            icon: Icons.badge_outlined,
+            color: Colors.indigo,
           ),
         ],
       ),
-    );
-  }
+    ],
+  );
+}
+
   Widget _buildPatientDemographicsCard() {
     return Container(
       height: 300,
@@ -323,11 +319,13 @@ Widget _buildClinicOverviewSection() {
 class _StatTile extends StatelessWidget {
   final String label, collection;
   final Color color;
+  final IconData icon; // Define the icon field here
   
   const _StatTile({
     required this.label, 
     required this.collection, 
     required this.color,
+    required this.icon, // Add this line to define the icon field
   });
 
   @override
