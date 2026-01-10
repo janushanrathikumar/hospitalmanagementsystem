@@ -235,7 +235,7 @@ class _MaternalChildCarePageState extends State<MaternalChildCarePage> {
     );
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     const purple = Color(0xFF7B2CBF);
 
@@ -247,6 +247,7 @@ class _MaternalChildCarePageState extends State<MaternalChildCarePage> {
         padding: const EdgeInsets.all(24),
         child: Container(
           width: double.infinity,
+          // Removed unnecessary height constraints to let it fill
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -261,8 +262,7 @@ class _MaternalChildCarePageState extends State<MaternalChildCarePage> {
           child: Column(
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -275,8 +275,7 @@ class _MaternalChildCarePageState extends State<MaternalChildCarePage> {
                       ),
                     ),
                     IconButton(
-                      icon:
-                          const Icon(Icons.add_circle, color: purple, size: 30),
+                      icon: const Icon(Icons.add_circle, color: purple, size: 30),
                       onPressed: _addRecordDialog,
                     ),
                   ],
@@ -298,38 +297,58 @@ class _MaternalChildCarePageState extends State<MaternalChildCarePage> {
                       return const Center(child: Text('No records found'));
                     }
 
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        headingRowColor:
-                            WidgetStatePropertyAll(const Color.fromARGB(255, 111, 1, 158)),
-                        headingTextStyle: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
-                        columns: const [
-                          DataColumn(label: Text('IC Number')),
-                          DataColumn(label: Text('Name')),
-                          DataColumn(label: Text('Address')),
-                          DataColumn(label: Text('Age')),
-                          DataColumn(label: Text('Mobile')),
-                          DataColumn(label: Text('Visit Date')),
-                          DataColumn(label: Text('Type')),
-                          DataColumn(label: Text('Vaccination Status')),
-                          DataColumn(label: Text('Risk Sign')),
-                        ],
-                        rows: docs.map((d) {
-                          final data = d.data() as Map<String, dynamic>;
-                          return DataRow(cells: [
-                            DataCell(Text(data['ic_number'] ?? '')),
-                            DataCell(Text(data['name'] ?? '')),
-                            DataCell(Text(data['address'] ?? '')),
-                            DataCell(Text(data['age'] ?? '')),
-                            DataCell(Text(data['mobile'] ?? '')),
-                            DataCell(Text(data['visit_date'] ?? '')),
-                            DataCell(Text(data['type'] ?? '')),
-                            DataCell(Text(data['vaccination_status'] ?? '')),
-                            DataCell(Text(data['risk_sign'] ?? '')),
-                          ]);
-                        }).toList(),
+                    // Theme wrapper to force the table to take up space and remove gaps
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        dividerColor: Colors.grey.shade200,
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                // This ensures the table is at least as wide as the screen
+                                minWidth: MediaQuery.of(context).size.width - 48, 
+                              ),
+                              child: DataTable(
+                                // Reduce spacing to fit more columns
+                                columnSpacing: 20, 
+                                horizontalMargin: 12,
+                                headingRowColor: WidgetStatePropertyAll(const Color(0xFF6F019E)),
+                                headingTextStyle: const TextStyle(
+                                    color: Colors.white, fontWeight: FontWeight.bold),
+                                columns: const [
+                                  DataColumn(label: Text('IC Number')),
+                                  DataColumn(label: Text('Name')),
+                                  DataColumn(label: Text('Address')),
+                                  DataColumn(label: Text('Age')),
+                                  DataColumn(label: Text('Mobile')),
+                                  DataColumn(label: Text('Visit Date')),
+                                  DataColumn(label: Text('Type')),
+                                  DataColumn(label: Text('Vaccination')),
+                                  DataColumn(label: Text('Risk Sign')),
+                                ],
+                                rows: docs.map((d) {
+                                  final data = d.data() as Map<String, dynamic>;
+                                  return DataRow(cells: [
+                                    DataCell(Text(data['ic_number'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    DataCell(Text(data['name'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    DataCell(Text(data['address'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    DataCell(Text(data['age'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    DataCell(Text(data['mobile'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    DataCell(Text(data['visit_date'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    DataCell(Text(data['type'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    DataCell(Text(data['vaccination_status'] ?? '', style: const TextStyle(fontSize: 12))),
+                                    DataCell(Text(data['risk_sign'] ?? '', style: const TextStyle(fontSize: 12)))
+                                  ]);
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     );
                   },

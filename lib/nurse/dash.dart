@@ -40,22 +40,46 @@ class _NurseDashState extends State<NurseDash> {
         backgroundColor: primaryPurple,
         child: const Icon(Icons.smart_toy, color: Colors.white),
         onPressed: () {
-          showDialog(
+          showGeneralDialog(
             context: context,
             barrierDismissible: true,
-            builder: (_) => Dialog(
-              insetPadding: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              child: AiChatBot(
-                model: _model,
-                primaryColor: primaryPurple,
-              ),
-            ),
+            barrierLabel: "ChatBot",
+            transitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (context, anim1, anim2) {
+              return Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 80, right: 20),
+                  child: Material(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    elevation: 8,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: AiChatBot(
+                        model: _model,
+                        primaryColor: primaryPurple,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+            transitionBuilder: (context, anim1, anim2, child) {
+              return FadeTransition(
+                opacity: anim1,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.1),
+                    end: Offset.zero,
+                  ).animate(anim1),
+                  child: child,
+                ),
+              );
+            },
           );
         },
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -70,10 +94,8 @@ class _NurseDashState extends State<NurseDash> {
               ),
             ),
             const SizedBox(height: 20),
-
             _buildNurseOverviewSection(),
             const SizedBox(height: 25),
-
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -83,7 +105,6 @@ class _NurseDashState extends State<NurseDash> {
               ],
             ),
             const SizedBox(height: 25),
-
             Row(
               children: [
                 Expanded(child: _buildPatientCareTrendChart()),
@@ -113,9 +134,9 @@ class _NurseDashState extends State<NurseDash> {
             crossAxisCount: 3,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 1.6,
-            crossAxisSpacing: 15,
-            mainAxisSpacing: 15,
+            childAspectRatio: 2.2,
+            crossAxisSpacing: 20,
+            mainAxisSpacing: 30,
             children: const [
               _StatTile(
                   label: "Today's Visits",
@@ -153,15 +174,9 @@ class _NurseDashState extends State<NurseDash> {
                 centerSpaceRadius: 40,
                 sections: [
                   PieChartSectionData(
-                      value: 40,
-                      color: Colors.teal,
-                      title: '40%',
-                      radius: 50),
+                      value: 40, color: Colors.teal, title: '40%', radius: 50),
                   PieChartSectionData(
-                      value: 35,
-                      color: Colors.pink,
-                      title: '35%',
-                      radius: 50),
+                      value: 35, color: Colors.pink, title: '35%', radius: 50),
                   PieChartSectionData(
                       value: 25,
                       color: Colors.orange,
@@ -294,9 +309,7 @@ class _NurseDashState extends State<NurseDash> {
     return BarChartGroupData(x: x, barRods: [
       BarChartRodData(toY: y1, color: Colors.teal.shade300, width: 12),
       BarChartRodData(
-          toY: y2,
-          color: primaryPurple.withOpacity(0.7),
-          width: 12),
+          toY: y2, color: primaryPurple.withOpacity(0.7), width: 12),
     ]);
   }
 }
@@ -329,9 +342,7 @@ class _StatTile extends StatelessWidget {
             children: [
               Text(count,
                   style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: color)),
+                      fontSize: 32, fontWeight: FontWeight.bold, color: color)),
               const SizedBox(height: 4),
               Text(label,
                   textAlign: TextAlign.center,
